@@ -35,8 +35,7 @@ serve(async (req) => {
       })
       .join('');
 
-    const message = `Table by ${username}:\n` +
-      `${amount} | ${type}` +
+    const message = `${amount} | ${type}` +
       (gamePlus ? ` | ${gamePlus}+ game` : '') + '\n\n' +
       (optionsText ? optionsText : '');
 
