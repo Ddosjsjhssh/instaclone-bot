@@ -11,14 +11,14 @@ serve(async (req) => {
   }
 
   try {
-    const { telegramUsername, amount, type, gamePlus, options, balance } = await req.json();
+    const { amount, type, gamePlus, options, balance } = await req.json();
 
     const TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho";
     const TELEGRAM_GROUP_CHAT_ID = "-5082338946";
 
-    console.log('Sending table with username:', telegramUsername);
+    console.log('Sending table to Telegram');
 
-    // Format the message with @username
+    // Format the message
     const optionsText = Object.entries(options)
       .filter(([_, value]) => value)
       .map(([key]) => {
@@ -33,8 +33,7 @@ serve(async (req) => {
       })
       .join('');
 
-    // Message with @username - will be blue and clickable in Telegram
-    const message = `Table by @${telegramUsername}:\n${amount} | ${type}` +
+    const message = `${amount} | ${type}` +
       (gamePlus ? ` | ${gamePlus}+ game` : '') + '\n\n' +
       (optionsText ? optionsText : '');
 
