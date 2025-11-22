@@ -77,7 +77,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background w-full">
       {/* Header */}
       <header className="border-b border-border bg-card py-4 px-4">
         <div className="flex items-center justify-between">
@@ -101,7 +101,7 @@ const Index = () => {
       </div>
 
       {/* Main Content */}
-      <div className="p-4 space-y-4 max-w-2xl mx-auto">
+      <div className="p-4 space-y-4 w-full mx-auto">
         {/* Balance */}
         <div className="flex justify-between items-center border-b border-border pb-3">
           <h3 className="text-lg font-semibold">Table Details</h3>
