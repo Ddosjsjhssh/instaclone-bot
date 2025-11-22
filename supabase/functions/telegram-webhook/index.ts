@@ -28,17 +28,26 @@ serve(async (req) => {
       // Check if reply is "L" or "OK"
       if (replyText === 'L' || replyText === 'OK') {
         // Parse original table message to extract details
-        const amountMatch = originalMessage.match(/(\d+) \| (.+)/);
-        const optionsMatch = originalMessage.match(/=>(.+)/);
+        // Expected format: "Table by @username:\n1000 | 1 Goti | 100+ game\n\n=>Fresh Id=>No King Pass"
+        const lines = originalMessage.split('\n');
         
-        if (amountMatch) {
+        // Find the line with amount and game type (contains " | ")
+        const tableInfoLine = lines.find((line: string) => line.includes(' | ') && /\d+/.test(line));
+        
+        if (tableInfoLine) {
           const originalUserId = update.message.reply_to_message.from.id;
           const originalUsername = update.message.reply_to_message.from.username;
           const acceptingUsername = acceptingUser.username;
           const acceptingUserId = acceptingUser.id;
-          const amount = amountMatch[1];
-          const gameType = amountMatch[2].split('\n')[0].trim();
-          const options = optionsMatch ? optionsMatch[1].trim() : '';
+          
+          // Extract amount and game type
+          const parts = tableInfoLine.split(' | ');
+          const amount = parts[0].trim();
+          const gameType = parts.slice(1).join(' | ').trim();
+          
+          // Extract options (everything after "=>")
+          const optionsIndex = originalMessage.indexOf('=>');
+          const options = optionsIndex !== -1 ? originalMessage.substring(optionsIndex) : '';
           
           // Generate random table number
           const tableNumber = Math.floor(Math.random() * 9000) + 1000;
