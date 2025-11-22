@@ -70,7 +70,8 @@ const Index = () => {
     try {
       const { supabase } = await import("@/integrations/supabase/client");
       
-      const { data, error } = await supabase.functions.invoke('send-telegram-message', {
+      // Send to Telegram
+      const { data: telegramData, error: telegramError } = await supabase.functions.invoke('send-telegram-message', {
         body: {
           username,
           amount,
@@ -81,20 +82,44 @@ const Index = () => {
         },
       });
 
-      if (error) throw error;
+      if (telegramError) throw telegramError;
+
+      // Save to MongoDB
+      const tableData = {
+        username,
+        amount,
+        type,
+        gamePlus: gamePlus || "0",
+        options,
+        balance: "₹28.00",
+        timestamp: new Date().toISOString(),
+      };
+
+      const { data: mongoData, error: mongoError } = await supabase.functions.invoke('mongodb-operations', {
+        body: {
+          operation: 'insert',
+          collection: 'tables',
+          data: tableData,
+        },
+      });
+
+      if (mongoError) {
+        console.error('MongoDB save error:', mongoError);
+        toast.warning("Sent to Telegram but failed to save to database");
+      }
 
       const selectedOptions = Object.entries(options)
         .filter(([_, value]) => value)
         .map(([key]) => key)
         .join(", ") || "None";
 
-      toast.success("Table sent to Telegram group!", {
-        description: `Amount: ₹${amount}, Type: ${type}, Game+: ${gamePlus || 0}`,
+      toast.success("Table sent successfully!", {
+        description: `Sent to Telegram and saved to database. Amount: ₹${amount}`,
       });
     } catch (error) {
-      console.error('Error sending to Telegram:', error);
-      toast.error("Failed to send to Telegram", {
-        description: "Please check bot configuration in GitHub secrets",
+      console.error('Error:', error);
+      toast.error("Failed to send table", {
+        description: "Please check configuration",
       });
     }
   };
