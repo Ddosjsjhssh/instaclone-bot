@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
 const Index = () => {
+  const [username, setUsername] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("Full");
   const [gamePlus, setGamePlus] = useState("");
@@ -53,6 +54,10 @@ const Index = () => {
   };
 
   const handleSendTable = async () => {
+    if (!username) {
+      toast.error("Please enter your username");
+      return;
+    }
     if (!amount) {
       toast.error("Please enter an amount");
       return;
@@ -67,6 +72,7 @@ const Index = () => {
       
       const { data, error } = await supabase.functions.invoke('send-telegram-message', {
         body: {
+          username,
           amount,
           type,
           gamePlus,
@@ -150,6 +156,20 @@ const Index = () => {
             </Button>
           </div>
         </Card>
+
+        {/* Username Section */}
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-medium flex items-center gap-1">
+            👤 Username
+          </label>
+          <Input
+            type="text"
+            placeholder="Enter your username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="h-8 text-xs"
+          />
+        </div>
 
         {/* Amount Section */}
         <div className="space-y-1.5">
