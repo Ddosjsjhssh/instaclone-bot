@@ -33,23 +33,22 @@ serve(async (req) => {
         
         if (amountMatch) {
           const originalUserId = update.message.reply_to_message.from.id;
-          const originalUsername = update.message.reply_to_message.from.username || update.message.reply_to_message.from.first_name;
-          const acceptingUsername = acceptingUser.username || acceptingUser.first_name;
+          const originalUsername = update.message.reply_to_message.from.username;
+          const acceptingUsername = acceptingUser.username;
           const acceptingUserId = acceptingUser.id;
           const amount = amountMatch[1];
           const gameType = amountMatch[2].split('\n')[0].trim();
-          const options = optionsMatch ? optionsMatch[1] : '';
+          const options = optionsMatch ? optionsMatch[1].trim() : '';
           
           // Generate random table number
           const tableNumber = Math.floor(Math.random() * 9000) + 1000;
           
-          // Format the message with clickable mentions (blue usernames)
-          let formattedMessage = `DeepNightClubBot\n`;
-          formattedMessage += `[${originalUsername}](tg://user?id=${originalUserId}) Vs. [${acceptingUsername}](tg://user?id=${acceptingUserId})\n\n`;
+          // Format the message - using @ mentions directly
+          let formattedMessage = `@${originalUsername} Vs. @${acceptingUsername}\n\n`;
           formattedMessage += `Rs.${amount}.00 | ${gameType}`;
           
           if (options) {
-            formattedMessage += ` =>${options}`;
+            formattedMessage += `\n${options}`;
           }
           
           formattedMessage += `\n${'─'.repeat(40)}\n`;
@@ -68,8 +67,6 @@ serve(async (req) => {
               body: JSON.stringify({
                 chat_id: update.message.chat.id,
                 text: formattedMessage,
-                parse_mode: 'Markdown',
-                disable_web_page_preview: true,
               }),
             }
           );
