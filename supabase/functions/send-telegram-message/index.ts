@@ -36,7 +36,8 @@ serve(async (req) => {
       .join('');
 
     const message = `Table by [${username}](tg://user?id=0):\n` +
-      `${amount} | ${type}\n\n` +
+      `${amount} | ${type}` +
+      (gamePlus ? ` | ${gamePlus}+ game` : '') + '\n\n' +
       (optionsText ? optionsText : '');
 
     // Send message to Telegram group
