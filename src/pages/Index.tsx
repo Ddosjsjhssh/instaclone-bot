@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -7,7 +7,9 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
 const Index = () => {
-  const [username, setUsername] = useState("");
+  const [savedUsername, setSavedUsername] = useState("");
+  const [showUsernameSetup, setShowUsernameSetup] = useState(false);
+  const [tempUsername, setTempUsername] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("Full");
   const [gamePlus, setGamePlus] = useState("");
@@ -19,6 +21,33 @@ const Index = () => {
     autoLoss: false,
   });
   const [agreedToRules, setAgreedToRules] = useState(false);
+
+  // Load saved username on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('telegramUsername');
+    if (stored) {
+      setSavedUsername(stored);
+    } else {
+      setShowUsernameSetup(true);
+    }
+  }, []);
+
+  const handleSaveUsername = () => {
+    if (!tempUsername.trim()) {
+      toast.error("Please enter your username");
+      return;
+    }
+    const username = tempUsername.startsWith('@') ? tempUsername : `@${tempUsername}`;
+    localStorage.setItem('telegramUsername', username);
+    setSavedUsername(username);
+    setShowUsernameSetup(false);
+    toast.success(`Username saved: ${username}`);
+  };
+
+  const handleChangeUsername = () => {
+    setTempUsername(savedUsername);
+    setShowUsernameSetup(true);
+  };
 
   // Last table request data
   const lastTableRequest = {
@@ -54,8 +83,9 @@ const Index = () => {
   };
 
   const handleSendTable = async () => {
-    if (!username) {
-      toast.error("Please enter your username");
+    if (!savedUsername) {
+      toast.error("Please set your username first");
+      setShowUsernameSetup(true);
       return;
     }
     if (!amount) {
@@ -70,10 +100,10 @@ const Index = () => {
     try {
       const { supabase } = await import("@/integrations/supabase/client");
       
-      // Send to Telegram
+      // Send to Telegram with saved username
       const { data: telegramData, error: telegramError } = await supabase.functions.invoke('send-telegram-message', {
         body: {
-          username,
+          username: savedUsername.replace('@', ''),
           amount,
           type,
           gamePlus,
@@ -86,7 +116,7 @@ const Index = () => {
 
       // Save to MongoDB
       const tableData = {
-        username,
+        username: savedUsername,
         amount,
         type,
         gamePlus: gamePlus || "0",
@@ -154,6 +184,56 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="p-2.5 space-y-2.5 w-full mx-auto">
+        {/* Username Setup Modal */}
+        {showUsernameSetup && (
+          <Card className="p-4 bg-primary/5 border-primary/20">
+            <div className="space-y-3">
+              <div className="text-center space-y-1">
+                <h3 className="text-sm font-semibold">👤 Set Your Username</h3>
+                <p className="text-xs text-muted-foreground">
+                  This will be used automatically for all tables
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Input
+                  type="text"
+                  placeholder="Enter username (with or without @)"
+                  value={tempUsername}
+                  onChange={(e) => setTempUsername(e.target.value)}
+                  className="h-9 text-sm"
+                  onKeyPress={(e) => e.key === 'Enter' && handleSaveUsername()}
+                />
+                <Button 
+                  onClick={handleSaveUsername}
+                  className="w-full h-9 text-sm"
+                >
+                  💾 Save Username
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Current Username Display */}
+        {savedUsername && !showUsernameSetup && (
+          <Card className="p-2.5 bg-muted/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Sending as:</span>
+                <span className="text-sm font-medium">{savedUsername}</span>
+              </div>
+              <Button 
+                onClick={handleChangeUsername}
+                variant="ghost" 
+                size="sm" 
+                className="h-7 text-xs"
+              >
+                ✏️ Change
+              </Button>
+            </div>
+          </Card>
+        )}
+
         {/* Balance */}
         <div className="flex justify-between items-center border-b border-border pb-1.5">
           <h3 className="text-sm font-semibold">Table Details</h3>
@@ -181,20 +261,6 @@ const Index = () => {
             </Button>
           </div>
         </Card>
-
-        {/* Username Section */}
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-medium flex items-center gap-1">
-            👤 Username
-          </label>
-          <Input
-            type="text"
-            placeholder="Enter your username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="h-8 text-xs"
-          />
-        </div>
 
         {/* Amount Section */}
         <div className="space-y-1.5">
