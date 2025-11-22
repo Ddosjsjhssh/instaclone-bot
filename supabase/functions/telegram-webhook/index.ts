@@ -22,17 +22,24 @@ serve(async (req) => {
       const originalMessage = update.message.reply_to_message.text;
       const acceptingUser = update.message.from;
       
+      console.log('Reply detected!');
       console.log('Reply text:', replyText);
       console.log('Original message:', originalMessage);
+      console.log('Accepting user:', JSON.stringify(acceptingUser));
+      console.log('Original user:', JSON.stringify(update.message.reply_to_message.from));
       
       // Check if reply is "L" or "OK"
       if (replyText === 'L' || replyText === 'OK') {
+        console.log('Valid reply detected (L or OK)');
+        
         // Parse original table message to extract details
-        // Expected format: "Table by @username:\n1000 | 1 Goti | 100+ game\n\n=>Fresh Id=>No King Pass"
+        // Expected format: "Table by @username:\n600 | Full | 200+ game\n\n=>Code Aap Doge=>No King Pass"
         const lines = originalMessage.split('\n');
+        console.log('Split lines:', JSON.stringify(lines));
         
         // Find the line with amount and game type (contains " | ")
         const tableInfoLine = lines.find((line: string) => line.includes(' | ') && /\d+/.test(line));
+        console.log('Table info line found:', tableInfoLine);
         
         if (tableInfoLine) {
           const originalUserId = update.message.reply_to_message.from.id;
@@ -40,14 +47,20 @@ serve(async (req) => {
           const acceptingUsername = acceptingUser.username;
           const acceptingUserId = acceptingUser.id;
           
+          console.log('Usernames - Original:', originalUsername, 'Accepting:', acceptingUsername);
+          
           // Extract amount and game type
           const parts = tableInfoLine.split(' | ');
           const amount = parts[0].trim();
           const gameType = parts.slice(1).join(' | ').trim();
           
+          console.log('Amount:', amount, 'Game Type:', gameType);
+          
           // Extract options (everything after "=>")
           const optionsIndex = originalMessage.indexOf('=>');
           const options = optionsIndex !== -1 ? originalMessage.substring(optionsIndex) : '';
+          
+          console.log('Options:', options);
           
           // Generate random table number
           const tableNumber = Math.floor(Math.random() * 9000) + 1000;
