@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -6,7 +6,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
+// Declare Telegram WebApp types
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: {
+        initData: string;
+        initDataUnsafe: {
+          user?: {
+            id: number;
+            first_name: string;
+            last_name?: string;
+            username?: string;
+            language_code?: string;
+          };
+        };
+        ready: () => void;
+        expand: () => void;
+      };
+    };
+  }
+}
+
 const Index = () => {
+  const [telegramUsername, setTelegramUsername] = useState<string>("");
+  const [telegramUser, setTelegramUser] = useState<any>(null);
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("Full");
   const [gamePlus, setGamePlus] = useState("");
@@ -18,6 +42,30 @@ const Index = () => {
     autoLoss: false,
   });
   const [agreedToRules, setAgreedToRules] = useState(false);
+
+  // Initialize Telegram Mini App and get user data
+  useEffect(() => {
+    if (window.Telegram?.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+
+      const user = tg.initDataUnsafe?.user;
+      if (user) {
+        setTelegramUser(user);
+        if (user.username) {
+          setTelegramUsername(user.username);
+          console.log('Telegram user detected:', user.username);
+        } else {
+          console.log('Telegram user has no username');
+          toast.info(`Welcome ${user.first_name}! (No username set in Telegram)`);
+        }
+      } else {
+        console.log('Not running in Telegram Mini App');
+        toast.info("Open this app in Telegram for automatic username detection");
+      }
+    }
+  }, []);
 
   // Last table request data
   const lastTableRequest = {
@@ -65,9 +113,12 @@ const Index = () => {
     try {
       const { supabase } = await import("@/integrations/supabase/client");
       
-      // Send to Telegram
+      // Send to Telegram with auto-detected username
       const { data: telegramData, error: telegramError } = await supabase.functions.invoke('send-telegram-message', {
         body: {
+          username: telegramUsername || 'Anonymous',
+          telegram_user_id: telegramUser?.id,
+          telegram_first_name: telegramUser?.first_name,
           amount,
           type,
           gamePlus,
@@ -80,6 +131,9 @@ const Index = () => {
 
       // Save to MongoDB
       const tableData = {
+        username: telegramUsername || 'Anonymous',
+        telegram_user_id: telegramUser?.id,
+        telegram_first_name: telegramUser?.first_name,
         amount,
         type,
         gamePlus: gamePlus || "0",
@@ -147,6 +201,17 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="p-2.5 space-y-2.5 w-full mx-auto">
+        {/* User Info */}
+        {telegramUsername && (
+          <Card className="p-2.5 bg-primary/5 border-primary/20">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Sending as:</span>
+              <span className="text-sm font-medium">@{telegramUsername}</span>
+              <span className="ml-auto text-xs text-green-600">✓ Auto-detected</span>
+            </div>
+          </Card>
+        )}
+
         {/* Balance */}
         <div className="flex justify-between items-center border-b border-border pb-1.5">
           <h3 className="text-sm font-semibold">Table Details</h3>
