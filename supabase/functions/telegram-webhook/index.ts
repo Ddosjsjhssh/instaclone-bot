@@ -42,17 +42,13 @@ serve(async (req) => {
         console.log('Table info line found:', tableInfoLine);
         
         if (tableInfoLine) {
-          const originalUserId = update.message.reply_to_message.from.id;
-          const originalUsername = update.message.reply_to_message.from.username;
-          const acceptingUsername = acceptingUser.username;
-          const acceptingUserId = acceptingUser.id;
+          // Extract username from "Table by @username:" in the original message
+          const firstLine = lines[0];
+          const usernameMatch = firstLine.match(/Table by @(\w+):/);
+          const originalUsername = usernameMatch ? usernameMatch[1] : 'Unknown';
+          const acceptingUsername = acceptingUser.username || acceptingUser.first_name;
           
-          // Get full names from user objects
-          const originalUser = update.message.reply_to_message.from;
-          const originalFullName = `${originalUser.first_name}${originalUser.last_name ? ' ' + originalUser.last_name : ''}`;
-          const acceptingFullName = `${acceptingUser.first_name}${acceptingUser.last_name ? ' ' + acceptingUser.last_name : ''}`;
-          
-          console.log('Original user:', originalFullName, 'Accepting user:', acceptingFullName);
+          console.log('Original username:', originalUsername, 'Accepting username:', acceptingUsername);
           
           // Extract amount and game type
           const parts = tableInfoLine.split(' | ');
@@ -71,7 +67,7 @@ serve(async (req) => {
           const tableNumber = Math.floor(Math.random() * 9000) + 1000;
           
           // Format the message exactly like the reference image
-          let formattedMessage = `@${originalFullName} Vs. @${acceptingFullName}\n\n`;
+          let formattedMessage = `@${originalUsername} Vs. @${acceptingUsername}\n\n`;
           formattedMessage += `Rs.${amount}.00 | ${gameType}`;
           
           if (options) {
