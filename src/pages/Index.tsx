@@ -135,9 +135,18 @@ const Index = () => {
             <SelectTrigger className="h-12">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover z-50">
               <SelectItem value="Full">Full</SelectItem>
-              <SelectItem value="Half">Half</SelectItem>
+              <SelectItem value="Ulta">Ulta</SelectItem>
+              <SelectItem value="Popular">Popular</SelectItem>
+              <SelectItem value="3 Goti">3 Goti</SelectItem>
+              <SelectItem value="2 Goti">2 Goti</SelectItem>
+              <SelectItem value="1 Goti">1 Goti</SelectItem>
+              <SelectItem value="1 Goti Quick">1 Goti Quick</SelectItem>
+              <SelectItem value="Snake">Snake</SelectItem>
+              <SelectItem value="Ulta Snake">Ulta Snake</SelectItem>
+              <SelectItem value="Snake Re-Roll">Snake Re-Roll</SelectItem>
+              <SelectItem value="Not Cut">Not Cut</SelectItem>
             </SelectContent>
           </Select>
         </div>
