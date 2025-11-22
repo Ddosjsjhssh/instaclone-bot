@@ -27,14 +27,13 @@ serve(async (req) => {
       
       // Check if reply is "L" or "OK"
       if (replyText === 'L' || replyText === 'OK') {
-        // Parse original table message to extract username and details
-        const tableMatch = originalMessage.match(/Table by (.+?):/);
+        // Parse original table message to extract details
         const amountMatch = originalMessage.match(/(\d+) \| (.+)/);
         const optionsMatch = originalMessage.match(/=>(.+)/);
         
-        if (tableMatch && amountMatch) {
-          const originalUsername = tableMatch[1];
+        if (amountMatch) {
           const originalUserId = update.message.reply_to_message.from.id;
+          const originalUsername = update.message.reply_to_message.from.username || update.message.reply_to_message.from.first_name;
           const acceptingUsername = acceptingUser.username || acceptingUser.first_name;
           const acceptingUserId = acceptingUser.id;
           const amount = amountMatch[1];
