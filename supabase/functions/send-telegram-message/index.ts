@@ -14,7 +14,7 @@ serve(async (req) => {
     const { amount, type, gamePlus, options, balance } = await req.json();
 
     // Replace these with your actual values
-    const TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN_HERE";
+    const TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho";
     const TELEGRAM_GROUP_CHAT_ID = "-5082338946";
 
     // Format the message
