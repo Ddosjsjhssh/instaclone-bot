@@ -19,8 +19,38 @@ const Index = () => {
   });
   const [agreedToRules, setAgreedToRules] = useState(false);
 
+  // Last table request data
+  const lastTableRequest = {
+    amount: "600",
+    type: "Full",
+    gamePlus: "0",
+    options: {
+      freshId: false,
+      codeAapDoge: false,
+      noIphone: false,
+      noKingPass: false,
+      autoLoss: false,
+    }
+  };
+
   const amountButtons = [1000, 2000, 3000, 5000, 7000, 8000, 10000];
   const gamePlusButtons = [100, 200, 500, 1000];
+
+  const handleCopyTable = () => {
+    setAmount(lastTableRequest.amount);
+    setType(lastTableRequest.type);
+    setGamePlus(lastTableRequest.gamePlus);
+    setOptions(lastTableRequest.options);
+    toast.success("Last table request copied to form");
+  };
+
+  const handleEditTable = () => {
+    setAmount(lastTableRequest.amount);
+    setType(lastTableRequest.type);
+    setGamePlus(lastTableRequest.gamePlus);
+    setOptions(lastTableRequest.options);
+    toast.success("Ready to edit - modify the form and send");
+  };
 
   const handleSendTable = () => {
     if (!amount) {
@@ -91,10 +121,10 @@ const Index = () => {
             <div>⚙️ Options: None</div>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" className="flex-1">
+            <Button variant="secondary" className="flex-1" onClick={handleCopyTable}>
               🔄 Copy Table
             </Button>
-            <Button variant="secondary" className="flex-1">
+            <Button variant="secondary" className="flex-1" onClick={handleEditTable}>
               ✏️ Edit Table
             </Button>
           </div>
