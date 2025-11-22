@@ -47,7 +47,12 @@ serve(async (req) => {
           const acceptingUsername = acceptingUser.username;
           const acceptingUserId = acceptingUser.id;
           
-          console.log('Usernames - Original:', originalUsername, 'Accepting:', acceptingUsername);
+          // Get full names from user objects
+          const originalUser = update.message.reply_to_message.from;
+          const originalFullName = `${originalUser.first_name}${originalUser.last_name ? ' ' + originalUser.last_name : ''}`;
+          const acceptingFullName = `${acceptingUser.first_name}${acceptingUser.last_name ? ' ' + acceptingUser.last_name : ''}`;
+          
+          console.log('Original user:', originalFullName, 'Accepting user:', acceptingFullName);
           
           // Extract amount and game type
           const parts = tableInfoLine.split(' | ');
@@ -65,8 +70,8 @@ serve(async (req) => {
           // Generate random table number
           const tableNumber = Math.floor(Math.random() * 9000) + 1000;
           
-          // Format the message - using @ mentions directly
-          let formattedMessage = `@${originalUsername} Vs. @${acceptingUsername}\n\n`;
+          // Format the message exactly like the reference image
+          let formattedMessage = `@${originalFullName} Vs. @${acceptingFullName}\n\n`;
           formattedMessage += `Rs.${amount}.00 | ${gameType}`;
           
           if (options) {
