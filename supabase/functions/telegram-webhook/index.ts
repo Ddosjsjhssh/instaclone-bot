@@ -34,7 +34,9 @@ serve(async (req) => {
         
         if (tableMatch && amountMatch) {
           const originalUsername = tableMatch[1];
+          const originalUserId = update.message.reply_to_message.from.id;
           const acceptingUsername = acceptingUser.username || acceptingUser.first_name;
+          const acceptingUserId = acceptingUser.id;
           const amount = amountMatch[1];
           const gameType = amountMatch[2].split('\n')[0].trim();
           const options = optionsMatch ? optionsMatch[1] : '';
@@ -42,9 +44,9 @@ serve(async (req) => {
           // Generate random table number
           const tableNumber = Math.floor(Math.random() * 9000) + 1000;
           
-          // Format the message with usernames (Telegram will show them in blue automatically)
+          // Format the message with clickable mentions (blue usernames)
           let formattedMessage = `DeepNightClubBot\n`;
-          formattedMessage += `@${originalUsername} Vs. @${acceptingUsername}\n\n`;
+          formattedMessage += `[${originalUsername}](tg://user?id=${originalUserId}) Vs. [${acceptingUsername}](tg://user?id=${acceptingUserId})\n\n`;
           formattedMessage += `Rs.${amount}.00 | ${gameType}`;
           
           if (options) {
