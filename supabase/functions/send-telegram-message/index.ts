@@ -15,7 +15,7 @@ serve(async (req) => {
 
     // Replace these with your actual values
     const TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN_HERE";
-    const TELEGRAM_GROUP_CHAT_ID = "YOUR_GROUP_CHAT_ID_HERE";
+    const TELEGRAM_GROUP_CHAT_ID = "-5082338946";
 
     // Format the message
     const optionsText = Object.entries(options)
