@@ -28,7 +28,7 @@ serve(async (req) => {
       // Check if reply is "L" or "OK"
       if (replyText === 'L' || replyText === 'OK') {
         // Parse original table message to extract username and details
-        const tableMatch = originalMessage.match(/Table by \[(.+?)\]/);
+        const tableMatch = originalMessage.match(/Table by (.+?):/);
         const amountMatch = originalMessage.match(/(\d+) \| (.+)/);
         const optionsMatch = originalMessage.match(/=>(.+)/);
         
@@ -42,9 +42,9 @@ serve(async (req) => {
           // Generate random table number
           const tableNumber = Math.floor(Math.random() * 9000) + 1000;
           
-          // Format the message with usernames in blue (using Markdown links)
+          // Format the message with usernames (Telegram will show them in blue automatically)
           let formattedMessage = `DeepNightClubBot\n`;
-          formattedMessage += `[@${originalUsername}](tg://user?id=${update.message.reply_to_message.from.id}) Vs. [@${acceptingUsername}](tg://user?id=${acceptingUser.id})\n\n`;
+          formattedMessage += `@${originalUsername} Vs. @${acceptingUsername}\n\n`;
           formattedMessage += `Rs.${amount}.00 | ${gameType}`;
           
           if (options) {
