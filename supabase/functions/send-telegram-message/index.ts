@@ -17,6 +17,8 @@ serve(async (req) => {
     const TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho";
     const TELEGRAM_GROUP_CHAT_ID = "-5082338946";
 
+    console.log('Sending to Telegram with chat_id:', TELEGRAM_GROUP_CHAT_ID);
+
     // Format the message
     const optionsText = Object.entries(options)
       .filter(([_, value]) => value)
@@ -49,7 +51,9 @@ serve(async (req) => {
     if (!telegramResponse.ok) {
       const error = await telegramResponse.json();
       console.error('Telegram API error:', error);
-      throw new Error('Failed to send message to Telegram');
+      console.error('Bot token (first 10 chars):', TELEGRAM_BOT_TOKEN.substring(0, 10));
+      console.error('Chat ID:', TELEGRAM_GROUP_CHAT_ID);
+      throw new Error(`Failed to send message to Telegram: ${error.description}`);
     }
 
     const result = await telegramResponse.json();
