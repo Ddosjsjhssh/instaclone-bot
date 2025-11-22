@@ -228,11 +228,18 @@ const Index = () => {
         </div>
 
         {/* Agreement */}
-        <div className="text-sm text-foreground">
-          I am agree with the{" "}
-          <a href="#" className="text-accent underline">
-            Game Rules
-          </a>
+        <div className="flex items-center gap-2 text-sm text-foreground">
+          <Checkbox
+            id="agree"
+            checked={agreedToRules}
+            onCheckedChange={(checked) => setAgreedToRules(checked as boolean)}
+          />
+          <label htmlFor="agree" className="cursor-pointer">
+            I am agree with the{" "}
+            <a href="#" className="text-accent underline">
+              Game Rules
+            </a>
+          </label>
         </div>
 
         {/* Send Button */}
@@ -243,18 +250,6 @@ const Index = () => {
         >
           ✅ Send Table
         </Button>
-
-        {/* Hidden agreement checkbox for demo */}
-        <div className="flex items-center space-x-2 pt-2">
-          <Checkbox
-            id="agree"
-            checked={agreedToRules}
-            onCheckedChange={(checked) => setAgreedToRules(checked as boolean)}
-          />
-          <label htmlFor="agree" className="text-xs text-muted-foreground cursor-pointer">
-            I agree to the terms (required to send)
-          </label>
-        </div>
       </div>
     </div>
   );
