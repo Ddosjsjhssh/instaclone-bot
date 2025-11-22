@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, type, gamePlus, options, balance } = await req.json();
+    const { username, amount, type, gamePlus, options, balance } = await req.json();
 
     // Replace these with your actual values
     const TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho";
@@ -22,15 +22,22 @@ serve(async (req) => {
     // Format the message
     const optionsText = Object.entries(options)
       .filter(([_, value]) => value)
-      .map(([key]) => `✓ ${key}`)
-      .join('\n');
+      .map(([key]) => {
+        // Format option names to match the display
+        const optionNames: { [key: string]: string } = {
+          freshId: 'Fresh Id',
+          codeAapDoge: 'Code Aap Doge',
+          noIphone: 'No iPhone',
+          noKingPass: 'No King Pass',
+          autoLoss: 'Auto Loss'
+        };
+        return `=>${optionNames[key] || key}`;
+      })
+      .join('');
 
-    const message = `🎮 *New Table Request*\n\n` +
-      `💰 *Amount:* ${amount}\n` +
-      `🎯 *Type:* ${type}\n` +
-      `🎮 *Game+:* ${gamePlus}\n` +
-      `💳 *Balance:* ${balance}\n\n` +
-      (optionsText ? `*Options:*\n${optionsText}` : 'No options selected');
+    const message = `Table by [${username}](tg://user?id=0):\n` +
+      `${amount} | ${type}\n\n` +
+      (optionsText ? optionsText : '');
 
     // Send message to Telegram group
     const telegramResponse = await fetch(
