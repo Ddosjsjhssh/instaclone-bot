@@ -13,12 +13,9 @@ serve(async (req) => {
   try {
     const { amount, type, gamePlus, options, balance } = await req.json();
 
-    const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN');
-    const TELEGRAM_GROUP_CHAT_ID = Deno.env.get('TELEGRAM_GROUP_CHAT_ID');
-
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_GROUP_CHAT_ID) {
-      throw new Error('Telegram bot token or group chat ID not configured');
-    }
+    // Replace these with your actual values
+    const TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN_HERE";
+    const TELEGRAM_GROUP_CHAT_ID = "YOUR_GROUP_CHAT_ID_HERE";
 
     // Format the message
     const optionsText = Object.entries(options)
