@@ -79,60 +79,60 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background w-full">
       {/* Header */}
-      <header className="border-b border-border bg-card py-2 px-3">
+      <header className="border-b border-border bg-card py-1.5 px-2.5">
         <div className="flex items-center justify-between">
-          <button className="text-xl">✕</button>
-          <h1 className="text-base font-semibold">DeepNightClubBot</h1>
-          <div className="flex gap-1.5">
-            <button className="text-xl">⌄</button>
-            <button className="text-xl">⋮</button>
+          <button className="text-lg">✕</button>
+          <h1 className="text-sm font-semibold">DeepNightClubBot</h1>
+          <div className="flex gap-1">
+            <button className="text-lg">⌄</button>
+            <button className="text-lg">⋮</button>
           </div>
         </div>
       </header>
 
       {/* Club Header */}
-      <div className="border-b border-border bg-card py-2.5 px-3">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
+      <div className="border-b border-border bg-card py-1.5 px-2.5">
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
             <span className="text-xs">🎲</span>
           </div>
-          <h2 className="text-base font-bold">DEEP NIGHT LUDO CLUB</h2>
+          <h2 className="text-sm font-bold">DEEP NIGHT LUDO CLUB</h2>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="p-3 space-y-3 w-full mx-auto">
+      <div className="p-2.5 space-y-2.5 w-full mx-auto">
         {/* Balance */}
-        <div className="flex justify-between items-center border-b border-border pb-2">
-          <h3 className="text-base font-semibold">Table Details</h3>
-          <div className="text-xs font-medium text-green-600">
+        <div className="flex justify-between items-center border-b border-border pb-1.5">
+          <h3 className="text-sm font-semibold">Table Details</h3>
+          <div className="text-[11px] font-medium text-green-600">
             💵 Balance: ₹28.00
           </div>
         </div>
 
         {/* Last Table Request Card */}
-        <Card className="p-3 bg-muted/50 space-y-2">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <span className="text-sm">🕐</span>
-            <h4 className="text-sm font-medium text-foreground">Last Table Request</h4>
+        <Card className="p-2 bg-muted/50 space-y-1.5">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <span className="text-xs">🕐</span>
+            <h4 className="text-xs font-medium text-foreground">Last Table Request</h4>
           </div>
-          <div className="space-y-0.5 text-xs">
+          <div className="space-y-0.5 text-[11px]">
             <div>💰 ₹600.00 🃏 Full 📉 0</div>
             <div>⚙️ Options: None</div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" className="flex-1 h-8 text-xs" onClick={handleCopyTable}>
+          <div className="flex gap-1.5">
+            <Button variant="secondary" size="sm" className="flex-1 h-7 text-[11px] px-2" onClick={handleCopyTable}>
               🔄 Copy Table
             </Button>
-            <Button variant="secondary" size="sm" className="flex-1 h-8 text-xs" onClick={handleEditTable}>
+            <Button variant="secondary" size="sm" className="flex-1 h-7 text-[11px] px-2" onClick={handleEditTable}>
               ✏️ Edit Table
             </Button>
           </div>
         </Card>
 
         {/* Amount Section */}
-        <div className="space-y-2">
-          <label className="text-xs font-medium flex items-center gap-1">
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-medium flex items-center gap-1">
             💰 Amount
           </label>
           <Input
@@ -140,15 +140,15 @@ const Index = () => {
             placeholder="Enter amount"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="h-9 text-sm"
+            className="h-8 text-xs"
           />
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1">
             {amountButtons.map((value) => (
               <Button
                 key={value}
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs px-2"
+                className="h-6 text-[11px] px-1.5"
                 onClick={() => setAmount(value.toString())}
               >
                 ₹{value}
@@ -158,12 +158,12 @@ const Index = () => {
         </div>
 
         {/* Type Section */}
-        <div className="space-y-2">
-          <label className="text-xs font-medium flex items-center gap-1">
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-medium flex items-center gap-1">
             🃏 Type
           </label>
           <Select value={type} onValueChange={setType}>
-            <SelectTrigger className="h-9 text-sm">
+            <SelectTrigger className="h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-popover z-50">
@@ -183,8 +183,8 @@ const Index = () => {
         </div>
 
         {/* Game+ Section */}
-        <div className="space-y-2">
-          <label className="text-xs font-medium flex items-center gap-1">
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-medium flex items-center gap-1">
             📈 Game+
           </label>
           <Input
@@ -192,15 +192,15 @@ const Index = () => {
             placeholder="Enter Game+"
             value={gamePlus}
             onChange={(e) => setGamePlus(e.target.value)}
-            className="h-9 text-sm"
+            className="h-8 text-xs"
           />
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1">
             {gamePlusButtons.map((value) => (
               <Button
                 key={value}
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs px-2"
+                className="h-6 text-[11px] px-1.5"
                 onClick={() => setGamePlus(value.toString())}
               >
                 {value}+
@@ -210,63 +210,63 @@ const Index = () => {
         </div>
 
         {/* Options Section */}
-        <div className="space-y-2">
-          <label className="text-xs font-medium flex items-center gap-1">
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-medium flex items-center gap-1">
             ⚙️ Options
           </label>
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
+          <div className="space-y-1.5">
+            <div className="flex items-center space-x-1.5">
               <Checkbox
                 id="freshId"
                 checked={options.freshId}
                 onCheckedChange={() => handleOptionChange("freshId")}
-                className="h-4 w-4"
+                className="h-3.5 w-3.5"
               />
-              <label htmlFor="freshId" className="text-xs cursor-pointer">
+              <label htmlFor="freshId" className="text-[11px] cursor-pointer">
                 Fresh Id
               </label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <Checkbox
                 id="codeAapDoge"
                 checked={options.codeAapDoge}
                 onCheckedChange={() => handleOptionChange("codeAapDoge")}
-                className="h-4 w-4"
+                className="h-3.5 w-3.5"
               />
-              <label htmlFor="codeAapDoge" className="text-xs cursor-pointer">
+              <label htmlFor="codeAapDoge" className="text-[11px] cursor-pointer">
                 Code aap doge
               </label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <Checkbox
                 id="noIphone"
                 checked={options.noIphone}
                 onCheckedChange={() => handleOptionChange("noIphone")}
-                className="h-4 w-4"
+                className="h-3.5 w-3.5"
               />
-              <label htmlFor="noIphone" className="text-xs cursor-pointer">
+              <label htmlFor="noIphone" className="text-[11px] cursor-pointer">
                 No iPhone
               </label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <Checkbox
                 id="noKingPass"
                 checked={options.noKingPass}
                 onCheckedChange={() => handleOptionChange("noKingPass")}
-                className="h-4 w-4"
+                className="h-3.5 w-3.5"
               />
-              <label htmlFor="noKingPass" className="text-xs cursor-pointer">
+              <label htmlFor="noKingPass" className="text-[11px] cursor-pointer">
                 No king pass
               </label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <Checkbox
                 id="autoLoss"
                 checked={options.autoLoss}
                 onCheckedChange={() => handleOptionChange("autoLoss")}
-                className="h-4 w-4"
+                className="h-3.5 w-3.5"
               />
-              <label htmlFor="autoLoss" className="text-xs cursor-pointer">
+              <label htmlFor="autoLoss" className="text-[11px] cursor-pointer">
                 Auto loss
               </label>
             </div>
@@ -274,12 +274,12 @@ const Index = () => {
         </div>
 
         {/* Agreement */}
-        <div className="flex items-center gap-2 text-xs text-foreground">
+        <div className="flex items-center gap-1.5 text-[11px] text-foreground">
           <Checkbox
             id="agree"
             checked={agreedToRules}
             onCheckedChange={(checked) => setAgreedToRules(checked as boolean)}
-            className="h-4 w-4"
+            className="h-3.5 w-3.5"
           />
           <label htmlFor="agree" className="cursor-pointer">
             I am agree with the{" "}
@@ -293,7 +293,7 @@ const Index = () => {
         <Button
           onClick={handleSendTable}
           disabled={!agreedToRules}
-          className="w-full h-11 text-sm font-medium bg-primary hover:bg-primary/90"
+          className="w-full h-9 text-xs font-medium bg-primary hover:bg-primary/90"
         >
           ✅ Send Table
         </Button>
