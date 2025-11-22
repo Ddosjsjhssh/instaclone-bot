@@ -11,19 +11,17 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, type, gamePlus, options, balance } = await req.json();
+    const { telegramUsername, amount, type, gamePlus, options, balance } = await req.json();
 
-    // Replace these with your actual values
     const TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho";
     const TELEGRAM_GROUP_CHAT_ID = "-5082338946";
 
-    console.log('Sending to Telegram with chat_id:', TELEGRAM_GROUP_CHAT_ID);
+    console.log('Sending to Telegram with username:', telegramUsername);
 
-    // Format the message
+    // Format the message with @username
     const optionsText = Object.entries(options)
       .filter(([_, value]) => value)
       .map(([key]) => {
-        // Format option names to match the display
         const optionNames: { [key: string]: string } = {
           freshId: 'Fresh Id',
           codeAapDoge: 'Code Aap Doge',
@@ -35,7 +33,8 @@ serve(async (req) => {
       })
       .join('');
 
-    const message = `${amount} | ${type}` +
+    // Message with @username that will be blue and clickable in Telegram
+    const message = `Table by @${telegramUsername}:\n${amount} | ${type}` +
       (gamePlus ? ` | ${gamePlus}+ game` : '') + '\n\n' +
       (optionsText ? optionsText : '');
 
