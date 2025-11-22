@@ -1,14 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { TelegramLoginButton } from "@/components/TelegramLoginButton";
 
 const Index = () => {
-  const [telegramUser, setTelegramUser] = useState<any>(null);
+  const [username, setUsername] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("Full");
   const [gamePlus, setGamePlus] = useState("");
@@ -38,48 +37,6 @@ const Index = () => {
   const amountButtons = [1000, 2000, 3000, 5000, 7000, 8000, 10000];
   const gamePlusButtons = [100, 200, 500, 1000];
 
-  // Load Telegram user from localStorage on mount
-  useEffect(() => {
-    const storedUser = localStorage.getItem('telegramUser');
-    if (storedUser) {
-      setTelegramUser(JSON.parse(storedUser));
-    }
-  }, []);
-
-  // Handle Telegram login
-  const handleTelegramLogin = async (user: any) => {
-    setTelegramUser(user);
-    localStorage.setItem('telegramUser', JSON.stringify(user));
-    
-    // Save to MongoDB
-    try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      await supabase.functions.invoke('mongodb-operations', {
-        body: {
-          operation: 'insert',
-          collection: 'users',
-          data: {
-            telegram_id: user.id,
-            username: user.username,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            photo_url: user.photo_url,
-            auth_date: user.auth_date,
-          }
-        }
-      });
-      toast.success(`Welcome, @${user.username}!`);
-    } catch (error) {
-      console.error('Error saving user:', error);
-    }
-  };
-
-  const handleTelegramLogout = () => {
-    setTelegramUser(null);
-    localStorage.removeItem('telegramUser');
-    toast.success('Logged out successfully');
-  };
-
   const handleCopyTable = () => {
     setAmount(lastTableRequest.amount);
     setType(lastTableRequest.type);
@@ -97,8 +54,8 @@ const Index = () => {
   };
 
   const handleSendTable = async () => {
-    if (!telegramUser) {
-      toast.error("Please login with Telegram first");
+    if (!username) {
+      toast.error("Please enter your username");
       return;
     }
     if (!amount) {
@@ -113,10 +70,10 @@ const Index = () => {
     try {
       const { supabase } = await import("@/integrations/supabase/client");
       
-      // Send to Telegram with username
+      // Send to Telegram
       const { data: telegramData, error: telegramError } = await supabase.functions.invoke('send-telegram-message', {
         body: {
-          username: telegramUser.username,
+          username,
           amount,
           type,
           gamePlus,
@@ -129,8 +86,7 @@ const Index = () => {
 
       // Save to MongoDB
       const tableData = {
-        username: telegramUser.username,
-        telegram_id: telegramUser.id,
+        username,
         amount,
         type,
         gamePlus: gamePlus || "0",
@@ -198,36 +154,6 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="p-2.5 space-y-2.5 w-full mx-auto">
-        {/* Telegram Login */}
-        {!telegramUser ? (
-          <Card className="p-4 bg-card/50 backdrop-blur">
-            <div className="text-center space-y-3">
-              <p className="text-sm font-medium">Login with Telegram to continue</p>
-              <TelegramLoginButton 
-                botName="DeepNightClubBot" 
-                onAuth={handleTelegramLogin} 
-              />
-            </div>
-          </Card>
-        ) : (
-          <Card className="p-3 bg-card/50 backdrop-blur">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {telegramUser.photo_url && (
-                  <img src={telegramUser.photo_url} alt="Profile" className="w-8 h-8 rounded-full" />
-                )}
-                <div>
-                  <p className="text-sm font-medium">@{telegramUser.username}</p>
-                  <p className="text-xs text-muted-foreground">{telegramUser.first_name}</p>
-                </div>
-              </div>
-              <Button onClick={handleTelegramLogout} variant="outline" size="sm">
-                Logout
-              </Button>
-            </div>
-          </Card>
-        )}
-
         {/* Balance */}
         <div className="flex justify-between items-center border-b border-border pb-1.5">
           <h3 className="text-sm font-semibold">Table Details</h3>
@@ -255,6 +181,20 @@ const Index = () => {
             </Button>
           </div>
         </Card>
+
+        {/* Username Section */}
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-medium flex items-center gap-1">
+            👤 Username
+          </label>
+          <Input
+            type="text"
+            placeholder="Enter your username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="h-8 text-xs"
+          />
+        </div>
 
         {/* Amount Section */}
         <div className="space-y-1.5">
@@ -418,7 +358,7 @@ const Index = () => {
         {/* Send Button */}
         <Button
           onClick={handleSendTable}
-          disabled={!agreedToRules || !telegramUser}
+          disabled={!agreedToRules}
           className="w-full h-9 text-xs font-medium bg-primary hover:bg-primary/90"
         >
           ✅ Send Table
