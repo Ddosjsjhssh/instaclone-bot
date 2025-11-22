@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { telegramUsername, amount, type, gamePlus, options, balance } = await req.json();
+    const { amount, type, gamePlus, options, balance } = await req.json();
 
     // Replace these with your actual values
     const TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho";
@@ -35,7 +35,7 @@ serve(async (req) => {
       })
       .join('');
 
-    const message = `Table by @${telegramUsername}:\n${amount} | ${type}` +
+    const message = `${amount} | ${type}` +
       (gamePlus ? ` | ${gamePlus}+ game` : '') + '\n\n' +
       (optionsText ? optionsText : '');
 
