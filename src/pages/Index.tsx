@@ -52,7 +52,7 @@ const Index = () => {
     toast.success("Ready to edit - modify the form and send");
   };
 
-  const handleSendTable = () => {
+  const handleSendTable = async () => {
     if (!amount) {
       toast.error("Please enter an amount");
       return;
@@ -61,15 +61,36 @@ const Index = () => {
       toast.error("Please agree to the game rules");
       return;
     }
-    
-    const selectedOptions = Object.entries(options)
-      .filter(([_, value]) => value)
-      .map(([key]) => key)
-      .join(", ") || "None";
 
-    toast.success("Table request sent successfully!", {
-      description: `Amount: ₹${amount}, Type: ${type}, Game+: ${gamePlus || 0}, Options: ${selectedOptions}`,
-    });
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      const { data, error } = await supabase.functions.invoke('send-telegram-message', {
+        body: {
+          amount,
+          type,
+          gamePlus,
+          options,
+          balance: "₹28.00",
+        },
+      });
+
+      if (error) throw error;
+
+      const selectedOptions = Object.entries(options)
+        .filter(([_, value]) => value)
+        .map(([key]) => key)
+        .join(", ") || "None";
+
+      toast.success("Table sent to Telegram group!", {
+        description: `Amount: ₹${amount}, Type: ${type}, Game+: ${gamePlus || 0}`,
+      });
+    } catch (error) {
+      console.error('Error sending to Telegram:', error);
+      toast.error("Failed to send to Telegram", {
+        description: "Please check bot configuration in GitHub secrets",
+      });
+    }
   };
 
   const handleOptionChange = (key: keyof typeof options) => {
