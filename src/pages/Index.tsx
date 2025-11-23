@@ -41,7 +41,6 @@ const Index = () => {
     noKingPass: false,
     autoLoss: false,
   });
-  const [agreedToRules, setAgreedToRules] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [userBalance, setUserBalance] = useState(0);
@@ -247,10 +246,6 @@ const Index = () => {
   const handleSendTable = async () => {
     if (!amount) {
       toast.error("Please enter an amount");
-      return;
-    }
-    if (!agreedToRules) {
-      toast.error("Please agree to the game rules");
       return;
     }
 
@@ -558,26 +553,9 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Agreement */}
-        <div className="flex items-center gap-0.5 text-[8px] text-foreground">
-          <Checkbox
-            id="agree"
-            checked={agreedToRules}
-            onCheckedChange={(checked) => setAgreedToRules(checked as boolean)}
-            className="h-2.5 w-2.5"
-          />
-          <label htmlFor="agree" className="cursor-pointer">
-            I agree with{" "}
-            <a href="#" className="text-accent underline">
-              Game Rules
-            </a>
-          </label>
-        </div>
-
         {/* Send Button */}
         <Button
           onClick={handleSendTable}
-          disabled={!agreedToRules}
           className="w-full h-6 text-[9px] font-medium bg-primary hover:bg-primary/90 py-0"
         >
           ✅ Send Table
