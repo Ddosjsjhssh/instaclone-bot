@@ -107,14 +107,17 @@ serve(async (req) => {
           `🔧 <b>Admin Panel</b>\n\n` +
           `<b>Available commands:</b>\n` +
           `/viewusers - View all users and balances\n` +
+          `/checkbalance - Check a user's balance\n` +
           `/addfund - Add funds to user\n` +
           `/deductfund - Deduct funds from user\n` +
           `/makeadmin - Make a user admin\n\n` +
           `<b>Usage:</b>\n` +
+          `/checkbalance [user_id]\n` +
           `/addfund [user_id] [amount]\n` +
           `/deductfund [user_id] [amount]\n` +
           `/makeadmin [user_id]\n\n` +
           `<b>Example:</b>\n` +
+          `/checkbalance 123456789\n` +
           `/addfund 123456789 500`;
         
         await sendTelegramMessage(chatId, panelMessage);
@@ -464,6 +467,61 @@ serve(async (req) => {
             `This user now has access to all admin commands.`
           );
         }
+      }
+      
+      // Handle /checkbalance command
+      else if (command === '/checkbalance') {
+        if (args.length < 1) {
+          await sendTelegramMessage(chatId, '❌ Invalid format. Use: /checkbalance [user_id]\n\nExample: /checkbalance 123456789');
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        const targetUserId = parseInt(args[0]);
+
+        if (isNaN(targetUserId)) {
+          await sendTelegramMessage(chatId, '❌ Invalid user ID.');
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        // Get user
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('telegram_user_id', targetUserId)
+          .maybeSingle();
+
+        if (userError) {
+          await sendTelegramMessage(chatId, '❌ Database error occurred.');
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        if (!user) {
+          await sendTelegramMessage(chatId, `❌ User with ID <code>${targetUserId}</code> not found.`);
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        // Send balance info
+        await sendTelegramMessage(
+          chatId,
+          `💰 <b>User Balance Information</b>\n\n` +
+          `User: @${user.username || 'N/A'}\n` +
+          `Name: ${user.telegram_first_name || 'N/A'} ${user.telegram_last_name || ''}\n` +
+          `User ID: <code>${targetUserId}</code>\n` +
+          `Current Balance: ₹${(user.balance || 0).toFixed(2)}\n` +
+          `Created: ${new Date(user.created_at).toLocaleDateString()}`
+        );
       }
       
       return new Response(JSON.stringify({ success: true }), {
