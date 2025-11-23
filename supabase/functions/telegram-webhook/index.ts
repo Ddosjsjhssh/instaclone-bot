@@ -943,13 +943,13 @@ serve(async (req) => {
         
         console.log('Cancel message entities:', JSON.stringify(entities));
         
-        // Send the message with entities
+        // Send the message with entities (DO NOT use parse_mode when using entities)
         const cancelMessagePayload: any = {
           chat_id: update.message.chat.id,
-          text: cancelMessageText,
-          parse_mode: 'HTML'
+          text: cancelMessageText
         };
         
+        // Add entities to make names clickable (blue)
         if (entities.length > 0) {
           cancelMessagePayload.entities = entities;
         }
