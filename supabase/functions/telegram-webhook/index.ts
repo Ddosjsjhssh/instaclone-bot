@@ -866,6 +866,42 @@ serve(async (req) => {
           `New balance: ₹${(acceptorUser.balance + refundAmount).toFixed(2)}`
         );
       }
+      
+      // Check if reply is "WIN" by admin to declare winner
+      if (replyText === 'WIN') {
+        console.log('✓ Win request detected');
+        
+        // Check if user is admin
+        const isUserAdmin = await isAdmin(supabase, acceptingUser.id);
+        
+        if (!isUserAdmin) {
+          // Silently ignore non-admin win attempts
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+        
+        // Parse the message to find table number
+        const tableNumberMatch = originalMessage.match(/Table #(\d+)/);
+        
+        if (!tableNumberMatch) {
+          await sendTelegramMessage(update.message.chat.id, '❌ Could not find table number in message.');
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+        
+        const tableNumber = parseInt(tableNumberMatch[1]);
+        console.log('🎯 Found table number for win:', tableNumber);
+        
+        // Send winner message to the group
+        await sendTelegramMessage(
+          update.message.chat.id,
+          `🏆🥇 Winner 🏆🥇 🏆\n\nTable #${tableNumber}`
+        );
+      }
     }
 
     return new Response(
