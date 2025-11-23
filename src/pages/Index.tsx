@@ -249,6 +249,16 @@ const Index = () => {
       return;
     }
 
+    const tableAmount = parseFloat(amount);
+    
+    // Check if user has sufficient balance
+    if (userBalance < tableAmount) {
+      toast.error("Insufficient balance!", {
+        description: `You need ₹${tableAmount.toFixed(2)} but only have ₹${userBalance.toFixed(2)}`
+      });
+      return;
+    }
+
     try {
       const { supabase } = await import("@/integrations/supabase/client");
       
