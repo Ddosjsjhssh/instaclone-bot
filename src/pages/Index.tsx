@@ -50,8 +50,7 @@ const Index = () => {
   // Initialize Telegram Mini App and get user data
   useEffect(() => {
     const initializeApp = async () => {
-      console.log('🚀 Initializing mini app...');
-      console.log('📱 Telegram WebApp available:', !!window.Telegram?.WebApp);
+      console.log('🚀 Starting mini app initialization...');
       
       if (window.Telegram?.WebApp) {
         const tg = window.Telegram.WebApp;
@@ -59,38 +58,31 @@ const Index = () => {
         tg.expand();
 
         const user = tg.initDataUnsafe?.user;
-        console.log('👤 Telegram user data:', user);
+        console.log('👤 Telegram user:', user);
         
         if (user) {
           setTelegramUser(user);
+          
           if (user.username) {
             setTelegramUsername(user.username);
-            console.log('✅ Telegram user detected:', user.username, 'ID:', user.id);
-          } else {
-            console.log('Telegram user has no username');
-            toast.info(`Welcome ${user.first_name}! (No username set in Telegram)`);
+            console.log('✅ User logged in:', user.username, 'ID:', user.id);
           }
 
-          // Check if user is admin
-          console.log('🔍 Checking admin status...');
-          const adminResult = await checkAdminStatus(user.id);
-          console.log('👑 Is admin:', adminResult);
+          // IMMEDIATE: Check admin status
+          const isUserAdmin = await checkAdminStatus(user.id);
           
-          // Get user balance - CRITICAL STEP
-          console.log('💰 Fetching user balance for ID:', user.id);
-          const balance = await getUserBalance(user.id);
-          console.log('✅ Balance loaded:', balance);
-          
-          if (balance > 0) {
-            toast.success(`Welcome! Your balance: ₹${balance.toFixed(2)}`);
+          if (!isUserAdmin) {
+            // IMMEDIATE: Load user balance for non-admin users
+            console.log('💰 Loading balance for user ID:', user.id);
+            const balance = await getUserBalance(user.id);
+            console.log('✅ Initial balance loaded:', balance);
           }
         } else {
-          console.log('❌ Not running in Telegram Mini App - no user data');
-          toast.info("Open this app in Telegram for automatic username detection");
+          console.log('❌ No Telegram user data found');
           setCheckingAdmin(false);
         }
       } else {
-        console.log('❌ Telegram WebApp not available');
+        console.log('❌ Not in Telegram environment');
         setCheckingAdmin(false);
       }
     };
@@ -122,8 +114,9 @@ const Index = () => {
     }
   };
 
-  const getUserBalance = async (telegramUserId: number) => {
+  const getUserBalance = async (telegramUserId: number): Promise<number> => {
     try {
+      console.log('💰 Fetching balance from database for user:', telegramUserId);
       const { supabase } = await import("@/integrations/supabase/client");
       
       const { data, error } = await supabase
@@ -132,38 +125,42 @@ const Index = () => {
         .eq('telegram_user_id', telegramUserId)
         .maybeSingle();
 
-      console.log('💰 Fetching balance for user:', telegramUserId);
+      if (error) {
+        console.error('❌ Database error:', error);
+        return 0;
+      }
 
-      if (!error && data) {
-        const balance = typeof data.balance === 'number' ? data.balance : parseFloat(data.balance || '0');
-        console.log('✅ Balance loaded:', balance);
+      if (data && data.balance !== null && data.balance !== undefined) {
+        const balance = typeof data.balance === 'number' ? data.balance : parseFloat(data.balance);
+        console.log('✅ Balance from database:', balance);
         setUserBalance(balance);
         return balance;
-      } else if (error) {
-        console.error('❌ Error fetching balance:', error);
+      } else {
+        console.log('⚠️ No balance data found for user');
+        return 0;
       }
-      return 0;
     } catch (error) {
       console.error('❌ Error getting user balance:', error);
       return 0;
     }
   };
 
-  // Auto-refresh balance every 10 seconds
+  // Auto-refresh balance every 5 seconds
   useEffect(() => {
-    if (!telegramUser?.id) return;
+    if (!telegramUser?.id || isAdmin) return;
 
-    console.log('⏰ Setting up auto-refresh for balance every 10 seconds');
+    console.log('⏰ Setting up auto-refresh every 5 seconds for user:', telegramUser.id);
+    
     const interval = setInterval(() => {
       console.log('🔄 Auto-refreshing balance...');
       getUserBalance(telegramUser.id);
-    }, 10000); // Refresh every 10 seconds
+    }, 5000); // Refresh every 5 seconds
 
     return () => {
-      console.log('⏰ Clearing auto-refresh interval');
+      console.log('⏰ Stopping auto-refresh');
       clearInterval(interval);
     };
-  }, [telegramUser?.id]);
+  }, [telegramUser?.id, isAdmin]);
 
   // Subscribe to real-time balance updates
   useEffect(() => {
