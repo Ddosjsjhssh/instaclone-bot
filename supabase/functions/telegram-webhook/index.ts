@@ -529,16 +529,6 @@ serve(async (req) => {
       else if (command === '/sendpinbutton') {
         const TELEGRAM_GROUP_CHAT_ID = "-1003390034266";
         
-        // Get bot username first
-        const botInfoResponse = await fetch(
-          `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe`
-        );
-        const botInfo = await botInfoResponse.json();
-        const botUsername = botInfo.result.username;
-        
-        // Create the mini app URL using t.me format
-        const miniAppUrl = `https://t.me/${botUsername}/app`;
-        
         // Send message with inline button to the group
         const message = "🎲 <b>Deep Night Ludo Club</b>\n\n✅ अपना टेबल लगाने के लिए नीचे बटन दबाएं\n💰 Balance automatically checked\n🎮 Last table settings auto-loaded\n\n<b>👇 यहाँ क्लिक करें 👇</b>";
         
@@ -555,7 +545,9 @@ serve(async (req) => {
                 inline_keyboard: [[
                   {
                     text: "🎮 Place New Table",
-                    url: miniAppUrl
+                    web_app: {
+                      url: "https://d70c826e-49fc-498b-868b-28028e643a08.lovableproject.com"
+                    }
                   }
                 ]]
               }
@@ -568,7 +560,7 @@ serve(async (req) => {
         
         if (!result.ok) {
           console.error('Telegram API error:', result);
-          await sendTelegramMessage(chatId, `❌ Failed to send button: ${result.description || 'Unknown error'}`);
+          await sendTelegramMessage(chatId, `❌ Failed to send button: ${result.description || 'Unknown error'}\n\nNote: Make sure Web App is configured in @BotFather using /newapp command`);
         } else {
           await sendTelegramMessage(chatId, '✅ Button sent to group successfully! You can now pin this message.');
         }
