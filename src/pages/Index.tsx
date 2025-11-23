@@ -136,6 +136,8 @@ const Index = () => {
     const setupRealtimeSubscription = async () => {
       const { supabase } = await import("@/integrations/supabase/client");
       
+      console.log('Setting up real-time balance subscription for user:', telegramUser.id);
+      
       const channel = supabase
         .channel('balance-changes')
         .on(
@@ -147,16 +149,23 @@ const Index = () => {
             filter: `telegram_user_id=eq.${telegramUser.id}`
           },
           (payload) => {
-            console.log('Balance updated:', payload);
+            console.log('✅ Balance updated in real-time!', payload);
             if (payload.new && 'balance' in payload.new) {
-              setUserBalance(payload.new.balance);
-              toast.success(`Balance updated: ₹${payload.new.balance.toFixed(2)}`);
+              const newBalance = parseFloat(payload.new.balance);
+              console.log('New balance:', newBalance);
+              setUserBalance(newBalance);
+              toast.success(`💰 Balance Updated: ₹${newBalance.toFixed(2)}`, {
+                description: 'Your balance has been updated by admin'
+              });
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('Real-time subscription status:', status);
+        });
 
       return () => {
+        console.log('Cleaning up real-time subscription');
         supabase.removeChannel(channel);
       };
     };
