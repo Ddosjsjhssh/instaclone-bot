@@ -54,6 +54,34 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Auto-register user if they send any message
+    if (update.message && update.message.from) {
+      const user = update.message.from;
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq('telegram_user_id', user.id)
+        .maybeSingle();
+
+      if (!existingUser) {
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            telegram_user_id: user.id,
+            username: user.username,
+            telegram_first_name: user.first_name,
+            telegram_last_name: user.last_name,
+            balance: 0
+          });
+
+        if (insertError) {
+          console.error('Error registering user:', insertError);
+        } else {
+          console.log(`✅ New user registered: ${user.username || user.first_name} (${user.id})`);
+        }
+      }
+    }
+
     // Handle admin commands
     if (update.message && update.message.text && update.message.text.startsWith('/')) {
       const userId = update.message.from.id;
