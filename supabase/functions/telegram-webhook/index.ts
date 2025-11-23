@@ -932,11 +932,11 @@ serve(async (req) => {
 
         console.log(`💰 Bet: ₹${betAmount}, Total Pot: ₹${totalPot}, Commission (5%): ₹${commission}, Winner gets: ₹${winnerAmount}`);
 
-        // Find winner by username
+        // Find winner by username (case-insensitive search)
         const { data: winnerUser, error: winnerError } = await supabase
           .from('users')
           .select('*')
-          .eq('username', winnerUsername)
+          .ilike('username', winnerUsername)
           .maybeSingle();
 
         if (winnerError || !winnerUser) {
