@@ -14,7 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admins: {
+        Row: {
+          created_at: string
+          id: string
+          telegram_user_id: number
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          telegram_user_id: number
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          telegram_user_id?: number
+          username?: string | null
+        }
+        Relationships: []
+      }
+      tables: {
+        Row: {
+          acceptor_telegram_user_id: number | null
+          amount: number
+          completed_at: string | null
+          created_at: string
+          creator_telegram_user_id: number
+          game_type: string
+          id: string
+          options: string | null
+          status: string
+          table_number: number
+        }
+        Insert: {
+          acceptor_telegram_user_id?: number | null
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          creator_telegram_user_id: number
+          game_type: string
+          id?: string
+          options?: string | null
+          status?: string
+          table_number: number
+        }
+        Update: {
+          acceptor_telegram_user_id?: number | null
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          creator_telegram_user_id?: number
+          game_type?: string
+          id?: string
+          options?: string | null
+          status?: string
+          table_number?: number
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          telegram_first_name: string | null
+          telegram_last_name: string | null
+          telegram_user_id: number
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          telegram_first_name?: string | null
+          telegram_last_name?: string | null
+          telegram_user_id: number
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          telegram_first_name?: string | null
+          telegram_last_name?: string | null
+          telegram_user_id?: number
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

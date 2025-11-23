@@ -9,21 +9,15 @@ const corsHeaders = {
 const TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho";
 
 // Helper function to check if user is admin
-async function isAdmin(telegramUserId: number): Promise<boolean> {
+async function isAdmin(supabase: any, telegramUserId: number): Promise<boolean> {
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data, error } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('telegram_user_id', telegramUserId)
+      .maybeSingle();
 
-    const { data, error } = await supabase.functions.invoke('mongodb-operations', {
-      body: {
-        operation: 'find',
-        collection: 'admins',
-        filter: { telegram_user_id: telegramUserId }
-      }
-    });
-
-    return !error && data?.data && data.data.length > 0;
+    return !error && data !== null;
   } catch (error) {
     console.error('Error checking admin status:', error);
     return false;
@@ -69,7 +63,7 @@ serve(async (req) => {
       const args = messageText.split(' ').slice(1);
 
       // Check if user is admin
-      const adminStatus = await isAdmin(userId);
+      const adminStatus = await isAdmin(supabase, userId);
       
       if (!adminStatus) {
         await sendTelegramMessage(chatId, '❌ You are not authorized to use admin commands.');
@@ -81,18 +75,14 @@ serve(async (req) => {
 
       // Handle /viewusers command
       if (command === '/viewusers') {
-        const { data, error } = await supabase.functions.invoke('mongodb-operations', {
-          body: {
-            operation: 'find',
-            collection: 'users',
-            filter: {}
-          }
-        });
+        const { data: users, error } = await supabase
+          .from('users')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-        if (error || !data?.data) {
+        if (error || !users) {
           await sendTelegramMessage(chatId, '❌ Failed to fetch users.');
         } else {
-          const users = data.data;
           let message = '👥 <b>All Users and Balances:</b>\n\n';
           
           if (users.length === 0) {
@@ -132,15 +122,13 @@ serve(async (req) => {
         }
 
         // Get user's current balance
-        const { data: userData, error: userError } = await supabase.functions.invoke('mongodb-operations', {
-          body: {
-            operation: 'find',
-            collection: 'users',
-            filter: { telegram_user_id: targetUserId }
-          }
-        });
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('telegram_user_id', targetUserId)
+          .maybeSingle();
 
-        if (userError || !userData?.data || userData.data.length === 0) {
+        if (userError || !user) {
           await sendTelegramMessage(chatId, '❌ User not found.');
           return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -148,18 +136,13 @@ serve(async (req) => {
           });
         }
 
-        const user = userData.data[0];
         const newBalance = (user.balance || 0) + amount;
 
         // Update balance
-        const { error: updateError } = await supabase.functions.invoke('mongodb-operations', {
-          body: {
-            operation: 'update',
-            collection: 'users',
-            filter: { telegram_user_id: targetUserId },
-            data: { balance: newBalance }
-          }
-        });
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ balance: newBalance, updated_at: new Date().toISOString() })
+          .eq('telegram_user_id', targetUserId);
 
         if (updateError) {
           await sendTelegramMessage(chatId, '❌ Failed to add funds.');
@@ -196,15 +179,13 @@ serve(async (req) => {
         }
 
         // Get user's current balance
-        const { data: userData, error: userError } = await supabase.functions.invoke('mongodb-operations', {
-          body: {
-            operation: 'find',
-            collection: 'users',
-            filter: { telegram_user_id: targetUserId }
-          }
-        });
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('telegram_user_id', targetUserId)
+          .maybeSingle();
 
-        if (userError || !userData?.data || userData.data.length === 0) {
+        if (userError || !user) {
           await sendTelegramMessage(chatId, '❌ User not found.');
           return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -212,7 +193,6 @@ serve(async (req) => {
           });
         }
 
-        const user = userData.data[0];
         const newBalance = (user.balance || 0) - amount;
 
         if (newBalance < 0) {
@@ -224,14 +204,10 @@ serve(async (req) => {
         }
 
         // Update balance
-        const { error: updateError } = await supabase.functions.invoke('mongodb-operations', {
-          body: {
-            operation: 'update',
-            collection: 'users',
-            filter: { telegram_user_id: targetUserId },
-            data: { balance: newBalance }
-          }
-        });
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ balance: newBalance, updated_at: new Date().toISOString() })
+          .eq('telegram_user_id', targetUserId);
 
         if (updateError) {
           await sendTelegramMessage(chatId, '❌ Failed to deduct funds.');
@@ -270,7 +246,6 @@ serve(async (req) => {
         console.log('✓ Valid reply detected (L or OK)');
         
         // Parse original table message to extract details
-        // Expected format: "Table by @username:\n600 | Full | 200+ game\n\n=>Code Aap Doge=>No King Pass"
         const lines = originalMessage.split('\n');
         console.log('📋 Split lines:', JSON.stringify(lines));
         
