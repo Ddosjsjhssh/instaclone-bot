@@ -899,7 +899,7 @@ serve(async (req) => {
         // Send winner message to the group
         await sendTelegramMessage(
           update.message.chat.id,
-          `🏆🥇 Winner 🏆🥇 🏆\n\nTable #${tableNumber}`
+          `Winner 🏆🥇 🏆\n\nTable #${tableNumber}`
         );
       }
     }
