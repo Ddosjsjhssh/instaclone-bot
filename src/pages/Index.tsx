@@ -45,19 +45,11 @@ const Index = () => {
   const [agreedToRules, setAgreedToRules] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
-  const [userBalance, setUserBalance] = useState(28.00);
+  const [userBalance, setUserBalance] = useState(0);
 
   // Initialize Telegram Mini App and get user data
   useEffect(() => {
     const initializeApp = async () => {
-      // Initialize first admin if needed
-      try {
-        const { supabase } = await import("@/integrations/supabase/client");
-        await supabase.functions.invoke('initialize-admin');
-      } catch (error) {
-        console.log('Admin initialization check completed');
-      }
-
       if (window.Telegram?.WebApp) {
         const tg = window.Telegram.WebApp;
         tg.ready();
@@ -138,15 +130,18 @@ const Index = () => {
 
   // Subscribe to real-time balance updates
   useEffect(() => {
-    if (!telegramUser?.id) return;
+    if (!telegramUser?.id) {
+      console.log('No telegram user, skipping real-time subscription');
+      return;
+    }
 
     const setupRealtimeSubscription = async () => {
       const { supabase } = await import("@/integrations/supabase/client");
       
-      console.log('Setting up real-time balance subscription for user:', telegramUser.id);
+      console.log('🔄 Setting up real-time balance subscription for user:', telegramUser.id);
       
       const channel = supabase
-        .channel('balance-changes')
+        .channel(`balance-changes-${telegramUser.id}`)
         .on(
           'postgres_changes',
           {
@@ -158,8 +153,10 @@ const Index = () => {
           (payload) => {
             console.log('✅ Balance updated in real-time!', payload);
             if (payload.new && 'balance' in payload.new) {
-              const newBalance = parseFloat(payload.new.balance);
-              console.log('New balance:', newBalance);
+              const newBalance = typeof payload.new.balance === 'number' 
+                ? payload.new.balance 
+                : parseFloat(payload.new.balance || '0');
+              console.log('💰 New balance:', newBalance);
               setUserBalance(newBalance);
               toast.success(`💰 Balance Updated: ₹${newBalance.toFixed(2)}`, {
                 description: 'Your balance has been updated by admin'
@@ -168,16 +165,19 @@ const Index = () => {
           }
         )
         .subscribe((status) => {
-          console.log('Real-time subscription status:', status);
+          console.log('📡 Real-time subscription status:', status);
         });
 
       return () => {
-        console.log('Cleaning up real-time subscription');
+        console.log('🔌 Cleaning up real-time subscription');
         supabase.removeChannel(channel);
       };
     };
 
-    setupRealtimeSubscription();
+    const cleanup = setupRealtimeSubscription();
+    return () => {
+      cleanup.then(fn => fn && fn());
+    };
   }, [telegramUser?.id]);
 
   // Last table request data
