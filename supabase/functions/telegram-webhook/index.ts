@@ -829,13 +829,17 @@ serve(async (req) => {
         
         console.log(`✅ Refunded ₹${refundAmount} to both users`);
         
+        // Format usernames for display
+        const creatorDisplay = creatorUser.username ? `@${creatorUser.username}` : creatorUser.telegram_first_name || 'User';
+        const acceptorDisplay = acceptorUser.username ? `@${acceptorUser.username}` : acceptorUser.telegram_first_name || 'User';
+        
         // Notify group
         await sendTelegramMessage(
           update.message.chat.id,
           `✅ <b>Table #${tableNumber} Cancelled</b>\n\n` +
           `Refunded ₹${refundAmount.toFixed(2)} to both users:\n` +
-          `@${creatorUser.username || creatorUser.telegram_first_name}\n` +
-          `@${acceptorUser.username || acceptorUser.telegram_first_name}`
+          `${creatorDisplay}\n` +
+          `${acceptorDisplay}`
         );
         
         // Notify both users
