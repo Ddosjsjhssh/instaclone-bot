@@ -46,8 +46,8 @@ serve(async (req) => {
     const botInfo = await botInfoResponse.json();
     const botName = botInfo.result.username;
     
-    // Create the mini app URL
-    const miniAppUrl = `https://t.me/${botName}/app`;
+    // Create the mini app URL - use the actual web app URL
+    const miniAppUrl = "https://d70c826e-49fc-498b-868b-28028e643a08.lovableproject.com?forceHideBadge=true";
     
     // Send message with inline button to the group
     const message = "🎲 <b>Place Your Table</b>\n\nClick the button below to open the app and place your table:";
@@ -65,7 +65,9 @@ serve(async (req) => {
             inline_keyboard: [[
               {
                 text: "🎮 Place New Table",
-                url: miniAppUrl
+                web_app: {
+                  url: miniAppUrl
+                }
               }
             ]]
           }
