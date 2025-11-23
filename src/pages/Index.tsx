@@ -5,7 +5,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { AdminPanel } from "@/components/AdminPanel";
 
 // Declare Telegram WebApp types
 declare global {
@@ -69,14 +68,12 @@ const Index = () => {
           }
 
           // IMMEDIATE: Check admin status
-          const isUserAdmin = await checkAdminStatus(user.id);
+          await checkAdminStatus(user.id);
           
-          if (!isUserAdmin) {
-            // IMMEDIATE: Load user balance for non-admin users
-            console.log('💰 Loading balance for user ID:', user.id);
-            const balance = await getUserBalance(user.id);
-            console.log('✅ Initial balance loaded:', balance);
-          }
+          // IMMEDIATE: Load user balance for all users
+          console.log('💰 Loading balance for user ID:', user.id);
+          const balance = await getUserBalance(user.id);
+          console.log('✅ Initial balance loaded:', balance);
         } else {
           console.log('❌ No Telegram user data found');
           setCheckingAdmin(false);
@@ -145,9 +142,9 @@ const Index = () => {
     }
   };
 
-  // Auto-refresh balance every 5 seconds
+  // Auto-refresh balance every 5 seconds for all users
   useEffect(() => {
-    if (!telegramUser?.id || isAdmin) return;
+    if (!telegramUser?.id) return;
 
     console.log('⏰ Setting up auto-refresh every 5 seconds for user:', telegramUser.id);
     
@@ -325,10 +322,6 @@ const Index = () => {
         </div>
       </div>
     );
-  }
-
-  if (isAdmin) {
-    return <AdminPanel />;
   }
 
   return (
