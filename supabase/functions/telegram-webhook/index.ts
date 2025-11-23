@@ -932,15 +932,49 @@ serve(async (req) => {
 
         console.log(`💰 Bet: ₹${betAmount}, Total Pot: ₹${totalPot}, Commission (5%): ₹${commission}, Winner gets: ₹${winnerAmount}`);
 
-        // Find winner by username (case-insensitive search)
+        // Determine winner telegram_user_id from table data
+        // Check original message for usernames and match with table creator/acceptor
+        const originalText = update.message.reply_to_message.text.toLowerCase();
+        let winnerTelegramUserId: number | null = null;
+
+        // Extract both usernames from original message
+        const allMentions = update.message.reply_to_message.text.match(/@(\w+)/g);
+        console.log(`📋 All mentions in original message: ${JSON.stringify(allMentions)}`);
+
+        if (allMentions && allMentions.length >= 2) {
+          // Check if winner username matches first or second player
+          const firstPlayerUsername = allMentions[0].substring(1).toLowerCase(); // Remove @
+          const secondPlayerUsername = allMentions[1].substring(1).toLowerCase(); // Remove @
+          
+          console.log(`🎮 Player 1: @${firstPlayerUsername}, Player 2: @${secondPlayerUsername}`);
+          console.log(`🏆 Winner mentioned: @${winnerUsername.toLowerCase()}`);
+
+          if (winnerUsername.toLowerCase() === firstPlayerUsername) {
+            winnerTelegramUserId = tableData.creator_telegram_user_id;
+            console.log(`✓ Winner is Player 1 (creator): ${winnerTelegramUserId}`);
+          } else if (winnerUsername.toLowerCase() === secondPlayerUsername) {
+            winnerTelegramUserId = tableData.acceptor_telegram_user_id;
+            console.log(`✓ Winner is Player 2 (acceptor): ${winnerTelegramUserId}`);
+          }
+        }
+
+        if (!winnerTelegramUserId) {
+          await sendTelegramMessage(update.message.chat.id, `❌ Could not determine winner. Make sure @${winnerUsername} is one of the players in this table.`);
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        // Get winner user data
         const { data: winnerUser, error: winnerError } = await supabase
           .from('users')
           .select('*')
-          .ilike('username', winnerUsername)
+          .eq('telegram_user_id', winnerTelegramUserId)
           .maybeSingle();
 
         if (winnerError || !winnerUser) {
-          await sendTelegramMessage(update.message.chat.id, `❌ Could not find user @${winnerUsername}`);
+          await sendTelegramMessage(update.message.chat.id, `❌ Could not find user data for winner.`);
           return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
