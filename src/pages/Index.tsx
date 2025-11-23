@@ -46,7 +46,6 @@ const Index = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [userBalance, setUserBalance] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Initialize Telegram Mini App and get user data
   useEffect(() => {
@@ -133,12 +132,11 @@ const Index = () => {
         .eq('telegram_user_id', telegramUserId)
         .maybeSingle();
 
-      console.log('📊 Fetching balance for user:', telegramUserId);
-      console.log('📊 Balance data received:', data);
+      console.log('💰 Fetching balance for user:', telegramUserId);
 
       if (!error && data) {
         const balance = typeof data.balance === 'number' ? data.balance : parseFloat(data.balance || '0');
-        console.log('💰 Setting balance to:', balance);
+        console.log('✅ Balance loaded:', balance);
         setUserBalance(balance);
         return balance;
       } else if (error) {
@@ -151,14 +149,21 @@ const Index = () => {
     }
   };
 
-  const refreshBalance = async () => {
+  // Auto-refresh balance every 10 seconds
+  useEffect(() => {
     if (!telegramUser?.id) return;
-    setIsRefreshing(true);
-    console.log('🔄 Manually refreshing balance...');
-    const newBalance = await getUserBalance(telegramUser.id);
-    toast.success(`Balance refreshed: ₹${newBalance.toFixed(2)}`);
-    setIsRefreshing(false);
-  };
+
+    console.log('⏰ Setting up auto-refresh for balance every 10 seconds');
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-refreshing balance...');
+      getUserBalance(telegramUser.id);
+    }, 10000); // Refresh every 10 seconds
+
+    return () => {
+      console.log('⏰ Clearing auto-refresh interval');
+      clearInterval(interval);
+    };
+  }, [telegramUser?.id]);
 
   // Subscribe to real-time balance updates
   useEffect(() => {
@@ -366,23 +371,11 @@ const Index = () => {
           </Card>
         )}
 
-        {/* Balance with Refresh Button */}
+        {/* Balance */}
         <div className="flex justify-between items-center border-b border-border pb-1.5">
           <h3 className="text-sm font-semibold">Table Details</h3>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={refreshBalance}
-              disabled={isRefreshing}
-              className="h-6 w-6 p-0 hover:bg-primary/10"
-              title="Refresh balance"
-            >
-              {isRefreshing ? '⏳' : '🔄'}
-            </Button>
-            <div className="text-[11px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
-              💵 Balance: ₹{userBalance?.toFixed(2) || '0.00'}
-            </div>
+          <div className="text-[11px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
+            💵 Balance: ₹{userBalance?.toFixed(2) || '0.00'}
           </div>
         </div>
 
