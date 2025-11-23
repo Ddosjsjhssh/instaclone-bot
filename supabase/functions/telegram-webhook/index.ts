@@ -221,12 +221,23 @@ serve(async (req) => {
         if (updateError) {
           await sendTelegramMessage(chatId, '❌ Failed to add funds.');
         } else {
+          // Notify admin
           await sendTelegramMessage(
             chatId,
             `✅ <b>Funds Added Successfully!</b>\n\n` +
             `User: @${user.username || 'N/A'}\n` +
+            `User ID: <code>${targetUserId}</code>\n` +
             `Added: ₹${amount.toFixed(2)}\n` +
             `New Balance: ₹${newBalance.toFixed(2)}`
+          );
+          
+          // Notify the user receiving funds
+          await sendTelegramMessage(
+            targetUserId,
+            `💰 <b>Funds Added to Your Account!</b>\n\n` +
+            `Amount: ₹${amount.toFixed(2)}\n` +
+            `New Balance: ₹${newBalance.toFixed(2)}\n\n` +
+            `Thank you for using our service!`
           );
         }
       }
@@ -309,12 +320,23 @@ serve(async (req) => {
         if (updateError) {
           await sendTelegramMessage(chatId, '❌ Failed to deduct funds.');
         } else {
+          // Notify admin
           await sendTelegramMessage(
             chatId,
             `✅ <b>Funds Deducted Successfully!</b>\n\n` +
             `User: @${user.username || 'N/A'}\n` +
+            `User ID: <code>${targetUserId}</code>\n` +
             `Deducted: ₹${amount.toFixed(2)}\n` +
             `New Balance: ₹${newBalance.toFixed(2)}`
+          );
+          
+          // Notify the user about deduction
+          await sendTelegramMessage(
+            targetUserId,
+            `⚠️ <b>Funds Deducted from Your Account</b>\n\n` +
+            `Amount: ₹${amount.toFixed(2)}\n` +
+            `New Balance: ₹${newBalance.toFixed(2)}\n\n` +
+            `If you have any questions, please contact support.`
           );
         }
       }
