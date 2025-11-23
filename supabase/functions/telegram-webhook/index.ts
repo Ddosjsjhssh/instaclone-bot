@@ -12,7 +12,7 @@ serve(async (req) => {
 
   try {
     const update = await req.json();
-    console.log('Received webhook update:', JSON.stringify(update));
+    console.log('🔔 Received webhook update:', JSON.stringify(update, null, 2));
 
     const TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho";
     
@@ -21,34 +21,35 @@ serve(async (req) => {
       const replyText = update.message.text.trim().toUpperCase();
       const originalMessage = update.message.reply_to_message.text;
       const acceptingUser = update.message.from;
+      const originalUser = update.message.reply_to_message.from;
       
-      console.log('Reply detected!');
-      console.log('Reply text:', replyText);
-      console.log('Original message:', originalMessage);
-      console.log('Accepting user:', JSON.stringify(acceptingUser));
-      console.log('Original user:', JSON.stringify(update.message.reply_to_message.from));
+      console.log('✅ Reply detected!');
+      console.log('📝 Reply text:', replyText);
+      console.log('📨 Original message:', originalMessage);
+      console.log('👤 Accepting user:', JSON.stringify(acceptingUser));
+      console.log('👤 Original user:', JSON.stringify(originalUser));
       
       // Check if reply is "L" or "OK"
       if (replyText === 'L' || replyText === 'OK') {
-        console.log('Valid reply detected (L or OK)');
+        console.log('✓ Valid reply detected (L or OK)');
         
         // Parse original table message to extract details
         // Expected format: "Table by @username:\n600 | Full | 200+ game\n\n=>Code Aap Doge=>No King Pass"
         const lines = originalMessage.split('\n');
-        console.log('Split lines:', JSON.stringify(lines));
+        console.log('📋 Split lines:', JSON.stringify(lines));
         
         // Find the line with amount and game type (contains " | ")
         const tableInfoLine = lines.find((line: string) => line.includes(' | ') && /\d+/.test(line));
-        console.log('Table info line found:', tableInfoLine);
+        console.log('🎯 Table info line found:', tableInfoLine);
         
         if (tableInfoLine) {
           // Extract username from "Table by @username:" in the original message
           const firstLine = lines[0];
           const usernameMatch = firstLine.match(/Table by @(\w+):/);
-          const originalUsername = usernameMatch ? usernameMatch[1] : 'Unknown';
+          const originalUsername = usernameMatch ? usernameMatch[1] : (originalUser.username || originalUser.first_name);
           const acceptingUsername = acceptingUser.username || acceptingUser.first_name;
           
-          console.log('Original username:', originalUsername, 'Accepting username:', acceptingUsername);
+          console.log('👥 Usernames - Original:', originalUsername, 'Accepting:', acceptingUsername);
           
           // Extract amount and game type
           const parts = tableInfoLine.split(' | ');
