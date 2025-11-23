@@ -15,8 +15,17 @@ serve(async (req) => {
 
     const TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho";
     const TELEGRAM_GROUP_CHAT_ID = "-5082338946";
+    
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log('Sending table with auto-detected username:', username);
+
+    // Generate random table number
+    const tableNumber = Math.floor(Math.random() * 9000) + 1000;
 
     // Format the message
     const optionsText = Object.entries(options)
@@ -43,6 +52,26 @@ serve(async (req) => {
     const message = userDisplay + `${amount} | ${type}` +
       (gamePlus ? ` | ${gamePlus}+ game` : '') + '\n\n' +
       (optionsText ? optionsText : '');
+
+    // Store table in database
+    const gameType = type + (gamePlus ? ` | ${gamePlus}+ game` : '');
+    const { error: insertError } = await supabase
+      .from('tables')
+      .insert({
+        creator_telegram_user_id: telegram_user_id,
+        amount: parseFloat(amount),
+        game_type: gameType,
+        options: optionsText || null,
+        table_number: tableNumber,
+        status: 'open'
+      });
+
+    if (insertError) {
+      console.error('Error storing table in database:', insertError);
+      // Continue even if DB insert fails
+    } else {
+      console.log('Table stored in database with number:', tableNumber);
+    }
 
     // Send message to Telegram group
     const telegramResponse = await fetch(

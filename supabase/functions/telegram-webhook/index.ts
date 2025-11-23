@@ -470,11 +470,6 @@ serve(async (req) => {
         if (tableInfoLine) {
           // Extract username from "Table by @username:" in the original message
           const firstLine = lines[0];
-          const usernameMatch = firstLine.match(/Table by @(\w+):/);
-          const originalUsername = usernameMatch ? usernameMatch[1] : (originalUser.username || originalUser.first_name);
-          const acceptingUsername = acceptingUser.username || acceptingUser.first_name;
-          
-          console.log('👥 Usernames - Original:', originalUsername, 'Accepting:', acceptingUsername);
           
           // Extract amount and game type
           const parts = tableInfoLine.split(' | ');
@@ -487,26 +482,68 @@ serve(async (req) => {
           
           console.log('Amount:', amountText, 'Parsed amount:', betAmount, 'Game Type:', gameType);
           
+          // Find the table in database using the message content
+          const { data: tableRecord, error: tableError } = await supabase
+            .from('tables')
+            .select('*')
+            .eq('amount', betAmount)
+            .eq('game_type', gameType)
+            .eq('status', 'open')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (tableError || !tableRecord) {
+            console.error('Error finding table:', tableError);
+            await sendTelegramMessage(
+              update.message.chat.id,
+              `❌ Error: Could not find table record. Please try again.`
+            );
+            return new Response(JSON.stringify({ success: true }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            });
+          }
+
+          console.log('Found table record:', tableRecord);
+          
+          // Get the creator's telegram_user_id from the table record
+          const creatorTelegramId = tableRecord.creator_telegram_user_id;
+          const acceptorTelegramId = acceptingUser.id;
+          
+          // Get creator's username for display
+          const { data: creatorUserData } = await supabase
+            .from('users')
+            .select('username, telegram_first_name')
+            .eq('telegram_user_id', creatorTelegramId)
+            .maybeSingle();
+          
+          const originalUsername = creatorUserData?.username || creatorUserData?.telegram_first_name || 'Unknown';
+          const acceptingUsername = acceptingUser.username || acceptingUser.first_name;
+          
+          console.log('👥 Usernames - Original:', originalUsername, '(ID:', creatorTelegramId, ') Accepting:', acceptingUsername, '(ID:', acceptorTelegramId, ')');
+          
           // Deduct balance from both users
           try {
             // Get both users' balances
             const { data: creatorUser, error: creatorError } = await supabase
               .from('users')
               .select('balance, username, telegram_first_name')
-              .eq('telegram_user_id', originalUser.id)
+              .eq('telegram_user_id', creatorTelegramId)
               .maybeSingle();
 
             const { data: acceptorUser, error: acceptorError } = await supabase
               .from('users')
               .select('balance, username, telegram_first_name')
-              .eq('telegram_user_id', acceptingUser.id)
+              .eq('telegram_user_id', acceptorTelegramId)
               .maybeSingle();
 
             if (creatorError || acceptorError || !creatorUser || !acceptorUser) {
-              console.error('Error fetching user balances:', creatorError || acceptorError);
+              console.error('Error fetching user balances - Creator error:', creatorError, 'Acceptor error:', acceptorError);
+              console.error('Creator user:', creatorUser, 'Acceptor user:', acceptorUser);
               await sendTelegramMessage(
                 update.message.chat.id,
-                `❌ Error: Could not fetch user balances. Please try again.`
+                `❌ Error: Could not fetch user balances. Please ensure both users are registered.`
               );
               return new Response(JSON.stringify({ success: true }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -544,7 +581,7 @@ serve(async (req) => {
                 balance: creatorUser.balance - betAmount,
                 updated_at: new Date().toISOString()
               })
-              .eq('telegram_user_id', originalUser.id);
+              .eq('telegram_user_id', creatorTelegramId);
 
             const { error: deductAcceptorError } = await supabase
               .from('users')
@@ -552,7 +589,7 @@ serve(async (req) => {
                 balance: acceptorUser.balance - betAmount,
                 updated_at: new Date().toISOString()
               })
-              .eq('telegram_user_id', acceptingUser.id);
+              .eq('telegram_user_id', acceptorTelegramId);
 
             if (deductCreatorError || deductAcceptorError) {
               console.error('Error deducting balances:', deductCreatorError || deductAcceptorError);
@@ -566,18 +603,32 @@ serve(async (req) => {
               });
             }
 
+            // Update table status
+            const { error: updateTableError } = await supabase
+              .from('tables')
+              .update({ 
+                acceptor_telegram_user_id: acceptorTelegramId,
+                status: 'matched',
+                completed_at: new Date().toISOString()
+              })
+              .eq('id', tableRecord.id);
+
+            if (updateTableError) {
+              console.error('Error updating table status:', updateTableError);
+            }
+
             console.log(`✅ Deducted ₹${betAmount} from both users`);
             console.log(`Creator new balance: ₹${(creatorUser.balance - betAmount).toFixed(2)}`);
             console.log(`Acceptor new balance: ₹${(acceptorUser.balance - betAmount).toFixed(2)}`);
 
             // Notify both users
             await sendTelegramMessage(
-              originalUser.id,
+              creatorTelegramId,
               `💰 Match confirmed! ₹${betAmount.toFixed(2)} deducted.\nNew balance: ₹${(creatorUser.balance - betAmount).toFixed(2)}`
             );
 
             await sendTelegramMessage(
-              acceptingUser.id,
+              acceptorTelegramId,
               `💰 Match confirmed! ₹${betAmount.toFixed(2)} deducted.\nNew balance: ₹${(acceptorUser.balance - betAmount).toFixed(2)}`
             );
           } catch (balanceError) {
