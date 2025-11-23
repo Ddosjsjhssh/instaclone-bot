@@ -118,6 +118,36 @@ serve(async (req) => {
           `/addfund 123456789 500`;
         
         await sendTelegramMessage(chatId, panelMessage);
+        
+        // Get bot username to create mini-app URL
+        const botInfoResponse = await fetch(
+          `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe`
+        );
+        const botInfo = await botInfoResponse.json();
+        const botUsername = botInfo.result.username;
+        const miniAppUrl = `https://t.me/${botUsername}/app`;
+        
+        // Send Place New Table button
+        await fetch(
+          `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: '🎮 Click below to place a new table:',
+              reply_markup: {
+                inline_keyboard: [[
+                  {
+                    text: '🎮 Place New Table',
+                    url: miniAppUrl
+                  }
+                ]]
+              }
+            })
+          }
+        );
+        
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
