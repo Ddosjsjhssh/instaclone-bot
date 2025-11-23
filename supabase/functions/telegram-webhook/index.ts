@@ -523,6 +523,9 @@ serve(async (req) => {
           
           console.log('👥 Usernames - Original:', originalUsername, '(ID:', creatorTelegramId, ') Accepting:', acceptingUsername, '(ID:', acceptorTelegramId, ')');
           
+          // Generate random table number for the match
+          const matchTableNumber = Math.floor(Math.random() * 9000) + 1000;
+          
           // Deduct balance from both users
           try {
             // Get both users' balances
@@ -603,12 +606,13 @@ serve(async (req) => {
               });
             }
 
-            // Update table status
+            // Update table status with new match table number
             const { error: updateTableError } = await supabase
               .from('tables')
               .update({ 
                 acceptor_telegram_user_id: acceptorTelegramId,
                 status: 'matched',
+                table_number: matchTableNumber,
                 completed_at: new Date().toISOString()
               })
               .eq('id', tableRecord.id);
@@ -642,9 +646,6 @@ serve(async (req) => {
           
           console.log('Options:', options);
           
-          // Generate random table number
-          const tableNumber = Math.floor(Math.random() * 9000) + 1000;
-          
           // Format the message exactly like the reference image
           let formattedMessage = `@${originalUsername} Vs. @${acceptingUsername}\n\n`;
           formattedMessage += `Rs.${betAmount}.00 | ${gameType}`;
@@ -654,7 +655,7 @@ serve(async (req) => {
           }
           
           formattedMessage += `\n${'─'.repeat(40)}\n`;
-          formattedMessage += `Table #${tableNumber}`;
+          formattedMessage += `Table #${matchTableNumber}`;
           
           console.log('Sending formatted message:', formattedMessage);
           
