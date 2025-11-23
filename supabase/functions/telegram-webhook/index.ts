@@ -482,15 +482,15 @@ serve(async (req) => {
           
           console.log('Amount:', amountText, 'Parsed amount:', betAmount, 'Game Type:', gameType);
           
-          // Find the table in database using the message content
+          // Find the table in database using the message_id from the reply
+          const originalMessageId = update.message.reply_to_message.message_id;
+          console.log('Looking for table with message_id:', originalMessageId);
+          
           const { data: tableRecord, error: tableError } = await supabase
             .from('tables')
             .select('*')
-            .eq('amount', betAmount)
-            .eq('game_type', gameType)
+            .eq('message_id', originalMessageId)
             .eq('status', 'open')
-            .order('created_at', { ascending: false })
-            .limit(1)
             .maybeSingle();
 
           if (tableError || !tableRecord) {

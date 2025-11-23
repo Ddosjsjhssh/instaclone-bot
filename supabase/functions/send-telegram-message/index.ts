@@ -53,9 +53,9 @@ serve(async (req) => {
       (gamePlus ? ` | ${gamePlus}+ game` : '') + '\n\n' +
       (optionsText ? optionsText : '');
 
-    // Store table in database
+    // Store table in database (will update with message_id after sending)
     const gameType = type + (gamePlus ? ` | ${gamePlus}+ game` : '');
-    const { error: insertError } = await supabase
+    const { data: insertedTable, error: insertError } = await supabase
       .from('tables')
       .insert({
         creator_telegram_user_id: telegram_user_id,
@@ -64,9 +64,11 @@ serve(async (req) => {
         options: optionsText || null,
         table_number: tableNumber,
         status: 'open'
-      });
+      })
+      .select()
+      .single();
 
-    if (insertError) {
+    if (insertError || !insertedTable) {
       console.error('Error storing table in database:', insertError);
       // Continue even if DB insert fails
     } else {
@@ -98,6 +100,20 @@ serve(async (req) => {
 
     const result = await telegramResponse.json();
     console.log('Message sent successfully:', result);
+
+    // Update the table record with the Telegram message_id
+    if (insertedTable && result.result?.message_id) {
+      const { error: updateError } = await supabase
+        .from('tables')
+        .update({ message_id: result.result.message_id })
+        .eq('id', insertedTable.id);
+      
+      if (updateError) {
+        console.error('Error updating table with message_id:', updateError);
+      } else {
+        console.log('Table updated with message_id:', result.result.message_id);
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: true, message: 'Message sent to Telegram group' }),
