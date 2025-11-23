@@ -327,71 +327,71 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background w-full">
       {/* Header */}
-      <header className="border-b border-border bg-card py-1 px-2">
+      <header className="border-b border-border bg-card py-0.5 px-1.5">
         <div className="flex items-center justify-between">
-          <button className="text-base">✕</button>
-          <h1 className="text-xs font-semibold">DeepNightClubBot</h1>
+          <button className="text-xs">✕</button>
+          <h1 className="text-[10px] font-semibold">DeepNightClubBot</h1>
           <div className="flex gap-0.5">
-            <button className="text-base">⌄</button>
-            <button className="text-base">⋮</button>
+            <button className="text-xs">⌄</button>
+            <button className="text-xs">⋮</button>
           </div>
         </div>
       </header>
 
       {/* Club Header */}
-      <div className="border-b border-border bg-card py-1 px-2">
-        <div className="flex items-center gap-1">
-          <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
-            <span className="text-[10px]">🎲</span>
+      <div className="border-b border-border bg-card py-0.5 px-1.5">
+        <div className="flex items-center gap-0.5">
+          <div className="w-4 h-4 rounded-full bg-muted flex items-center justify-center">
+            <span className="text-[8px]">🎲</span>
           </div>
-          <h2 className="text-xs font-bold">DEEP NIGHT LUDO CLUB</h2>
+          <h2 className="text-[10px] font-bold">DEEP NIGHT LUDO CLUB</h2>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="p-2 space-y-2 w-full mx-auto">
+      <div className="p-1.5 space-y-1.5 w-full mx-auto">
         {/* User Info */}
         {telegramUsername && (
-          <Card className="p-1.5 bg-primary/5 border-primary/20">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-muted-foreground">Sending as:</span>
-              <span className="text-xs font-medium">@{telegramUsername}</span>
-              <span className="ml-auto text-[9px] text-green-600">✓ Auto</span>
+          <Card className="p-1 bg-primary/5 border-primary/20">
+            <div className="flex items-center gap-1">
+              <span className="text-[8px] text-muted-foreground">Sending as:</span>
+              <span className="text-[9px] font-medium">@{telegramUsername}</span>
+              <span className="ml-auto text-[8px] text-green-600">✓ Auto</span>
             </div>
           </Card>
         )}
 
         {/* Balance */}
-        <div className="flex justify-between items-center border-b border-border pb-1">
-          <h3 className="text-xs font-semibold">Table Details</h3>
-          <div className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+        <div className="flex justify-between items-center border-b border-border pb-0.5">
+          <h3 className="text-[9px] font-semibold">Table Details</h3>
+          <div className="text-[8px] font-bold text-green-600 bg-green-50 px-1 py-0.5 rounded">
             💵 ₹{userBalance?.toFixed(2) || '0.00'}
           </div>
         </div>
 
         {/* Last Table Request Card */}
-        <Card className="p-1.5 bg-muted/50 space-y-1">
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <span className="text-[10px]">🕐</span>
-            <h4 className="text-[10px] font-medium text-foreground">Last Table</h4>
+        <Card className="p-1 bg-muted/50 space-y-0.5">
+          <div className="flex items-center gap-0.5 text-muted-foreground">
+            <span className="text-[8px]">🕐</span>
+            <h4 className="text-[8px] font-medium text-foreground">Last Table</h4>
           </div>
-          <div className="space-y-0.5 text-[10px]">
+          <div className="space-y-0.5 text-[8px]">
             <div>💰 ₹600 🃏 Full 📉 0</div>
             <div>⚙️ None</div>
           </div>
-          <div className="flex gap-1">
-            <Button variant="secondary" size="sm" className="flex-1 h-6 text-[10px] px-1.5" onClick={handleCopyTable}>
+          <div className="flex gap-0.5">
+            <Button variant="secondary" size="sm" className="flex-1 h-5 text-[8px] px-1" onClick={handleCopyTable}>
               🔄 Copy
             </Button>
-            <Button variant="secondary" size="sm" className="flex-1 h-6 text-[10px] px-1.5" onClick={handleEditTable}>
+            <Button variant="secondary" size="sm" className="flex-1 h-5 text-[8px] px-1" onClick={handleEditTable}>
               ✏️ Edit
             </Button>
           </div>
         </Card>
 
         {/* Amount Section */}
-        <div className="space-y-1">
-          <label className="text-[10px] font-medium flex items-center gap-0.5">
+        <div className="space-y-0.5">
+          <label className="text-[8px] font-medium flex items-center gap-0.5">
             💰 Amount
           </label>
           <Input
@@ -399,7 +399,7 @@ const Index = () => {
             placeholder="Enter amount"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="h-7 text-xs"
+            className="h-6 text-[10px] py-0.5"
           />
           <div className="flex flex-wrap gap-0.5">
             {amountButtons.map((value) => (
@@ -407,7 +407,7 @@ const Index = () => {
                 key={value}
                 variant="outline"
                 size="sm"
-                className="h-5 text-[10px] px-1"
+                className="h-4 text-[8px] px-1 py-0"
                 onClick={() => setAmount(value.toString())}
               >
                 ₹{value}
@@ -417,12 +417,12 @@ const Index = () => {
         </div>
 
         {/* Type Section */}
-        <div className="space-y-1">
-          <label className="text-[10px] font-medium flex items-center gap-0.5">
+        <div className="space-y-0.5">
+          <label className="text-[8px] font-medium flex items-center gap-0.5">
             🃏 Type
           </label>
           <Select value={type} onValueChange={setType}>
-            <SelectTrigger className="h-7 text-xs">
+            <SelectTrigger className="h-6 text-[10px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-popover z-50">
@@ -442,8 +442,8 @@ const Index = () => {
         </div>
 
         {/* Game+ Section */}
-        <div className="space-y-1">
-          <label className="text-[10px] font-medium flex items-center gap-0.5">
+        <div className="space-y-0.5">
+          <label className="text-[8px] font-medium flex items-center gap-0.5">
             📈 Game+
           </label>
           <Input
@@ -451,7 +451,7 @@ const Index = () => {
             placeholder="Enter Game+"
             value={gamePlus}
             onChange={(e) => setGamePlus(e.target.value)}
-            className="h-7 text-xs"
+            className="h-6 text-[10px] py-0.5"
           />
           <div className="flex flex-wrap gap-0.5">
             {gamePlusButtons.map((value) => (
@@ -459,7 +459,7 @@ const Index = () => {
                 key={value}
                 variant="outline"
                 size="sm"
-                className="h-5 text-[10px] px-1"
+                className="h-4 text-[8px] px-1 py-0"
                 onClick={() => setGamePlus(value.toString())}
               >
                 {value}+
@@ -469,63 +469,63 @@ const Index = () => {
         </div>
 
         {/* Options Section */}
-        <div className="space-y-1">
-          <label className="text-[10px] font-medium flex items-center gap-0.5">
+        <div className="space-y-0.5">
+          <label className="text-[8px] font-medium flex items-center gap-0.5">
             ⚙️ Options
           </label>
-          <div className="space-y-1">
-            <div className="flex items-center space-x-1">
+          <div className="space-y-0.5">
+            <div className="flex items-center space-x-0.5">
               <Checkbox
                 id="freshId"
                 checked={options.freshId}
                 onCheckedChange={() => handleOptionChange("freshId")}
-                className="h-3 w-3"
+                className="h-2.5 w-2.5"
               />
-              <label htmlFor="freshId" className="text-[10px] cursor-pointer">
+              <label htmlFor="freshId" className="text-[8px] cursor-pointer">
                 Fresh Id
               </label>
             </div>
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-0.5">
               <Checkbox
                 id="codeAapDoge"
                 checked={options.codeAapDoge}
                 onCheckedChange={() => handleOptionChange("codeAapDoge")}
-                className="h-3 w-3"
+                className="h-2.5 w-2.5"
               />
-              <label htmlFor="codeAapDoge" className="text-[10px] cursor-pointer">
+              <label htmlFor="codeAapDoge" className="text-[8px] cursor-pointer">
                 Code aap doge
               </label>
             </div>
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-0.5">
               <Checkbox
                 id="noIphone"
                 checked={options.noIphone}
                 onCheckedChange={() => handleOptionChange("noIphone")}
-                className="h-3 w-3"
+                className="h-2.5 w-2.5"
               />
-              <label htmlFor="noIphone" className="text-[10px] cursor-pointer">
+              <label htmlFor="noIphone" className="text-[8px] cursor-pointer">
                 No iPhone
               </label>
             </div>
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-0.5">
               <Checkbox
                 id="noKingPass"
                 checked={options.noKingPass}
                 onCheckedChange={() => handleOptionChange("noKingPass")}
-                className="h-3 w-3"
+                className="h-2.5 w-2.5"
               />
-              <label htmlFor="noKingPass" className="text-[10px] cursor-pointer">
+              <label htmlFor="noKingPass" className="text-[8px] cursor-pointer">
                 No king pass
               </label>
             </div>
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-0.5">
               <Checkbox
                 id="autoLoss"
                 checked={options.autoLoss}
                 onCheckedChange={() => handleOptionChange("autoLoss")}
-                className="h-3 w-3"
+                className="h-2.5 w-2.5"
               />
-              <label htmlFor="autoLoss" className="text-[10px] cursor-pointer">
+              <label htmlFor="autoLoss" className="text-[8px] cursor-pointer">
                 Auto loss
               </label>
             </div>
@@ -533,12 +533,12 @@ const Index = () => {
         </div>
 
         {/* Agreement */}
-        <div className="flex items-center gap-1 text-[10px] text-foreground">
+        <div className="flex items-center gap-0.5 text-[8px] text-foreground">
           <Checkbox
             id="agree"
             checked={agreedToRules}
             onCheckedChange={(checked) => setAgreedToRules(checked as boolean)}
-            className="h-3 w-3"
+            className="h-2.5 w-2.5"
           />
           <label htmlFor="agree" className="cursor-pointer">
             I agree with{" "}
@@ -552,7 +552,7 @@ const Index = () => {
         <Button
           onClick={handleSendTable}
           disabled={!agreedToRules}
-          className="w-full h-7 text-xs font-medium bg-primary hover:bg-primary/90"
+          className="w-full h-6 text-[9px] font-medium bg-primary hover:bg-primary/90 py-0"
         >
           ✅ Send Table
         </Button>
