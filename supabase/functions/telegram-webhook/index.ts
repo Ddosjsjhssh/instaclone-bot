@@ -14,7 +14,7 @@ serve(async (req) => {
     const update = await req.json();
     console.log('🔔 Received webhook update:', JSON.stringify(update, null, 2));
 
-    const TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho";
+    const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN');
     
     // Check if message exists and is a reply
     if (update.message && update.message.reply_to_message && update.message.text) {
