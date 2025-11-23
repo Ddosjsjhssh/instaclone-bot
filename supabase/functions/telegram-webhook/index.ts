@@ -110,7 +110,8 @@ serve(async (req) => {
           `/checkbalance - Check a user's balance\n` +
           `/addfund - Add funds to user\n` +
           `/deductfund - Deduct funds from user\n` +
-          `/makeadmin - Make a user admin\n\n` +
+          `/makeadmin - Make a user admin\n` +
+          `/sendpinbutton - Send Place New Table button to group\n\n` +
           `<b>Usage:</b>\n` +
           `/checkbalance [user_id]\n` +
           `/addfund [user_id] [amount]\n` +
@@ -522,6 +523,49 @@ serve(async (req) => {
           `Current Balance: ₹${(user.balance || 0).toFixed(2)}\n` +
           `Created: ${new Date(user.created_at).toLocaleDateString()}`
         );
+      }
+      
+      // Handle /sendpinbutton command
+      else if (command === '/sendpinbutton') {
+        const TELEGRAM_GROUP_CHAT_ID = "-1003390034266";
+        
+        // Create the mini app URL
+        const miniAppUrl = `https://d70c826e-49fc-498b-868b-28028e643a08.lovableproject.com?tgWebAppStartParam=group`;
+        
+        // Send message with inline button to the group
+        const message = "🎲 <b>Deep Night Ludo Club</b>\n\n✅ अपना टेबल लगाने के लिए नीचे बटन दबाएं\n💰 Balance automatically checked\n🎮 Last table settings auto-loaded\n\n<b>👇 यहाँ क्लिक करें 👇</b>";
+        
+        const response = await fetch(
+          `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: TELEGRAM_GROUP_CHAT_ID,
+              text: message,
+              parse_mode: 'HTML',
+              reply_markup: {
+                inline_keyboard: [[
+                  {
+                    text: "🎮 Place New Table - Open Mini App",
+                    web_app: {
+                      url: miniAppUrl
+                    }
+                  }
+                ]]
+              }
+            }),
+          }
+        );
+        
+        const result = await response.json();
+        
+        if (!result.ok) {
+          console.error('Telegram API error:', result);
+          await sendTelegramMessage(chatId, '❌ Failed to send button to group');
+        } else {
+          await sendTelegramMessage(chatId, '✅ Button sent to group successfully! You can now pin this message.');
+        }
       }
       
       return new Response(JSON.stringify({ success: true }), {
