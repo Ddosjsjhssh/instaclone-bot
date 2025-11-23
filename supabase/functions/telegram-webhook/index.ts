@@ -50,20 +50,6 @@ serve(async (req) => {
     const update = await req.json();
     console.log('🔔 Received webhook update:', JSON.stringify(update, null, 2));
 
-    // Disable the default menu button (hide "Play Game" button)
-    await fetch(
-      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setChatMenuButton`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          menu_button: {
-            type: 'commands'
-          }
-        })
-      }
-    );
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
