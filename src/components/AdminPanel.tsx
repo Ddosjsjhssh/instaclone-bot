@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
 interface User {
-  _id: string;
+  id: string;
   telegram_user_id: number;
   telegram_first_name: string;
   username: string;
@@ -21,6 +21,34 @@ export const AdminPanel = () => {
 
   useEffect(() => {
     loadUsers();
+    
+    // Subscribe to real-time balance updates
+    const setupRealtimeSubscription = async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      const channel = supabase
+        .channel('admin-balance-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'users'
+          },
+          (payload) => {
+            console.log('User balance updated:', payload);
+            // Reload users when any balance changes
+            loadUsers();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    setupRealtimeSubscription();
   }, []);
 
   const loadUsers = async () => {
@@ -28,18 +56,15 @@ export const AdminPanel = () => {
     try {
       const { supabase } = await import("@/integrations/supabase/client");
       
-      const { data, error } = await supabase.functions.invoke('mongodb-operations', {
-        body: {
-          operation: 'find',
-          collection: 'users',
-          filter: {},
-        },
-      });
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      if (data?.result) {
-        setUsers(data.result);
+      if (data) {
+        setUsers(data);
       }
     } catch (error) {
       console.error('Error loading users:', error);
@@ -66,14 +91,10 @@ export const AdminPanel = () => {
       
       const newBalance = (selectedUser.balance || 0) + amount;
       
-      const { error } = await supabase.functions.invoke('mongodb-operations', {
-        body: {
-          operation: 'update',
-          collection: 'users',
-          filter: { telegram_user_id: selectedUser.telegram_user_id },
-          data: { balance: newBalance },
-        },
-      });
+      const { error } = await supabase
+        .from('users')
+        .update({ balance: newBalance, updated_at: new Date().toISOString() })
+        .eq('telegram_user_id', selectedUser.telegram_user_id);
 
       if (error) throw error;
 
@@ -181,7 +202,7 @@ export const AdminPanel = () => {
           ) : (
             filteredUsers.map((user) => (
               <Card
-                key={user._id}
+                key={user.id}
                 className="p-3 cursor-pointer hover:bg-accent transition-colors"
                 onClick={() => setSelectedUser(user)}
               >
