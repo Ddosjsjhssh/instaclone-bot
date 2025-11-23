@@ -271,7 +271,33 @@ const Index = () => {
         },
       });
 
-      if (telegramError) throw telegramError;
+      if (telegramError) {
+        // Check for cooldown error (429 status)
+        const errorMsg = telegramError.message || '';
+        const isCooldownError = errorMsg.includes('wait') || errorMsg.includes('seconds');
+        
+        if (isCooldownError) {
+          // Extract remaining time if present
+          const timeMatch = errorMsg.match(/(\d+)\s*seconds?/);
+          const remainingTime = timeMatch ? timeMatch[1] : '10';
+          
+          toast.error("⏱️ Please wait before sending another table", {
+            description: `You need to wait ${remainingTime} seconds between tables`
+          });
+        } else {
+          throw telegramError;
+        }
+        return;
+      }
+
+      // Check if response contains cooldown error in data
+      if (telegramData?.error) {
+        const remainingTime = telegramData.cooldown || 10;
+        toast.error("⏱️ Please wait before sending another table", {
+          description: `You need to wait ${remainingTime} seconds between tables`
+        });
+        return;
+      }
 
       // Save to Supabase tables
       const tableData = {
