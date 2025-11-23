@@ -926,11 +926,10 @@ serve(async (req) => {
         }
 
         const betAmount = tableData.amount;
-        const totalPot = betAmount * 2;
-        const commission = totalPot * 0.05;
-        const winnerAmount = totalPot - commission;
-
-        console.log(`💰 Bet: ₹${betAmount}, Total Pot: ₹${totalPot}, Commission (5%): ₹${commission}, Winner gets: ₹${winnerAmount}`);
+        const commission = betAmount * 0.05; // 5% commission from one user's bet only
+        const winnerAmount = betAmount + (betAmount - commission); // First user's full bet + second user's bet minus commission
+        
+        console.log(`💰 Bet per user: ₹${betAmount}, Commission (5% from one bet): ₹${commission}, Winner gets: ₹${winnerAmount}`);
 
         // Determine winner telegram_user_id from table data
         // Check original message for usernames and match with table creator/acceptor
