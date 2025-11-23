@@ -102,6 +102,28 @@ serve(async (req) => {
           }
 
           console.log('Match message sent successfully');
+          
+          // Delete the original table message
+          const deleteResponse = await fetch(
+            `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/deleteMessage`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                chat_id: update.message.chat.id,
+                message_id: update.message.reply_to_message.message_id,
+              }),
+            }
+          );
+
+          if (deleteResponse.ok) {
+            console.log('Original table message deleted successfully');
+          } else {
+            const deleteError = await deleteResponse.json();
+            console.error('Failed to delete original message:', deleteError);
+          }
         }
       }
     }
