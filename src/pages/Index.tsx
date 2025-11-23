@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { AdminPanel } from "@/components/AdminPanel";
 
 // Declare Telegram WebApp types
 declare global {
@@ -42,30 +43,87 @@ const Index = () => {
     autoLoss: false,
   });
   const [agreedToRules, setAgreedToRules] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const [userBalance, setUserBalance] = useState(28.00);
 
   // Initialize Telegram Mini App and get user data
   useEffect(() => {
-    if (window.Telegram?.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready();
-      tg.expand();
+    const initializeApp = async () => {
+      if (window.Telegram?.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-      const user = tg.initDataUnsafe?.user;
-      if (user) {
-        setTelegramUser(user);
-        if (user.username) {
-          setTelegramUsername(user.username);
-          console.log('Telegram user detected:', user.username);
+        const user = tg.initDataUnsafe?.user;
+        if (user) {
+          setTelegramUser(user);
+          if (user.username) {
+            setTelegramUsername(user.username);
+            console.log('Telegram user detected:', user.username);
+          } else {
+            console.log('Telegram user has no username');
+            toast.info(`Welcome ${user.first_name}! (No username set in Telegram)`);
+          }
+
+          // Check if user is admin and get balance
+          await checkAdminStatus(user.id);
+          await getUserBalance(user.id);
         } else {
-          console.log('Telegram user has no username');
-          toast.info(`Welcome ${user.first_name}! (No username set in Telegram)`);
+          console.log('Not running in Telegram Mini App');
+          toast.info("Open this app in Telegram for automatic username detection");
+          setCheckingAdmin(false);
         }
       } else {
-        console.log('Not running in Telegram Mini App');
-        toast.info("Open this app in Telegram for automatic username detection");
+        setCheckingAdmin(false);
       }
-    }
+    };
+
+    initializeApp();
   }, []);
+
+  const checkAdminStatus = async (telegramUserId: number) => {
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      const { data, error } = await supabase.functions.invoke('mongodb-operations', {
+        body: {
+          operation: 'find',
+          collection: 'admins',
+          filter: { telegram_user_id: telegramUserId },
+        },
+      });
+
+      if (!error && data?.result && data.result.length > 0) {
+        setIsAdmin(true);
+        console.log('Admin access granted');
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    } finally {
+      setCheckingAdmin(false);
+    }
+  };
+
+  const getUserBalance = async (telegramUserId: number) => {
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      const { data, error } = await supabase.functions.invoke('mongodb-operations', {
+        body: {
+          operation: 'find',
+          collection: 'users',
+          filter: { telegram_user_id: telegramUserId },
+        },
+      });
+
+      if (!error && data?.result && data.result.length > 0) {
+        setUserBalance(data.result[0].balance || 0);
+      }
+    } catch (error) {
+      console.error('Error getting user balance:', error);
+    }
+  };
 
   // Last table request data
   const lastTableRequest = {
@@ -123,7 +181,7 @@ const Index = () => {
           type,
           gamePlus,
           options,
-          balance: "₹28.00",
+          balance: `₹${userBalance.toFixed(2)}`,
         },
       });
 
@@ -138,7 +196,7 @@ const Index = () => {
         type,
         gamePlus: gamePlus || "0",
         options,
-        balance: "₹28.00",
+        balance: userBalance,
         timestamp: new Date().toISOString(),
       };
 
@@ -174,6 +232,21 @@ const Index = () => {
   const handleOptionChange = (key: keyof typeof options) => {
     setOptions((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  if (checkingAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl mb-2">⏳</div>
+          <div className="text-sm text-muted-foreground">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAdmin) {
+    return <AdminPanel />;
+  }
 
   return (
     <div className="min-h-screen bg-background w-full">
@@ -216,7 +289,7 @@ const Index = () => {
         <div className="flex justify-between items-center border-b border-border pb-1.5">
           <h3 className="text-sm font-semibold">Table Details</h3>
           <div className="text-[11px] font-medium text-green-600">
-            💵 Balance: ₹28.00
+            💵 Balance: ₹{userBalance.toFixed(2)}
           </div>
         </div>
 
