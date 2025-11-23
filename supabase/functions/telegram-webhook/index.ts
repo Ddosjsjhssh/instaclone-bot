@@ -896,14 +896,75 @@ serve(async (req) => {
         
         console.log(`✅ Refunded ₹${refundAmount} to both users`);
         
-        // Notify group with usernames exactly as they appeared in confirmed message
-        await sendTelegramMessage(
-          update.message.chat.id,
-          `✅ <b>Table #${tableNumber} Cancelled</b>\n\n` +
-          `Refunded ₹${refundAmount.toFixed(2)} to both users:\n` +
-          `${creatorDisplayName}\n` +
-          `${acceptorDisplayName}`
+        // Build cancel message with proper entities for clickable names
+        const cancelMessageText = `✅ Table #${tableNumber} Cancelled\n\nRefunded ₹${refundAmount.toFixed(2)} to both users:\n`;
+        let finalMessage = cancelMessageText;
+        const entities: any[] = [];
+        
+        // Add creator name
+        let currentOffset = finalMessage.length;
+        if (creatorDisplayName.startsWith('@')) {
+          // Already has @, Telegram will auto-link
+          finalMessage += `${creatorDisplayName}\n`;
+        } else {
+          // Plain name, add text_mention entity
+          finalMessage += `${creatorDisplayName}\n`;
+          entities.push({
+            offset: currentOffset,
+            length: creatorDisplayName.length,
+            type: 'text_mention',
+            user: {
+              id: creatorId,
+              first_name: creatorDisplayName
+            }
+          });
+        }
+        
+        // Add acceptor name
+        currentOffset = finalMessage.length;
+        if (acceptorDisplayName.startsWith('@')) {
+          // Already has @, Telegram will auto-link
+          finalMessage += acceptorDisplayName;
+        } else {
+          // Plain name, add text_mention entity
+          finalMessage += acceptorDisplayName;
+          entities.push({
+            offset: currentOffset,
+            length: acceptorDisplayName.length,
+            type: 'text_mention',
+            user: {
+              id: acceptorId,
+              first_name: acceptorDisplayName
+            }
+          });
+        }
+        
+        // Send the message with entities
+        const cancelMessagePayload: any = {
+          chat_id: update.message.chat.id,
+          text: finalMessage,
+          parse_mode: 'HTML'
+        };
+        
+        if (entities.length > 0) {
+          cancelMessagePayload.entities = entities;
+        }
+        
+        const cancelResponse = await fetch(
+          `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(cancelMessagePayload),
+          }
         );
+        
+        if (!cancelResponse.ok) {
+          const error = await cancelResponse.json();
+          console.error('Error sending cancel notification:', error);
+        }
         
         // Notify both users
         await sendTelegramMessage(
