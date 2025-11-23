@@ -814,24 +814,32 @@ serve(async (req) => {
         const creatorId = tableRecord.creator_telegram_user_id;
         const acceptorId = tableRecord.acceptor_telegram_user_id;
         
-        // Get both users data including usernames and first names
+        // Extract usernames EXACTLY as shown in the confirmed table message
+        let creatorDisplayName = 'User';
+        let acceptorDisplayName = 'User';
+        
+        // Parse the original confirmed message to get exact display format
+        // Format is either "@username" or just "Name" (for users without username)
+        const vsMatch = originalMessage.match(/^(.+?)\s+Vs\.\s+(.+?)(?:\n|$)/m);
+        
+        if (vsMatch) {
+          creatorDisplayName = vsMatch[1].trim();
+          acceptorDisplayName = vsMatch[2].trim();
+          console.log('Extracted from message - Creator:', creatorDisplayName, 'Acceptor:', acceptorDisplayName);
+        }
+        
+        // Get both users for balance refund
         const { data: creatorUser } = await supabase
           .from('users')
-          .select('balance, username, telegram_first_name')
+          .select('balance')
           .eq('telegram_user_id', creatorId)
           .maybeSingle();
         
         const { data: acceptorUser } = await supabase
           .from('users')
-          .select('balance, username, telegram_first_name')
+          .select('balance')
           .eq('telegram_user_id', acceptorId)
           .maybeSingle();
-        
-        // Get proper display names for both users
-        const creatorDisplayName = creatorUser?.username || creatorUser?.telegram_first_name || 'User';
-        const acceptorDisplayName = acceptorUser?.username || acceptorUser?.telegram_first_name || 'User';
-        
-        console.log('Creator:', creatorDisplayName, 'Acceptor:', acceptorDisplayName);
         
         if (!creatorUser || !acceptorUser) {
           await sendTelegramMessage(
@@ -888,16 +896,13 @@ serve(async (req) => {
         
         console.log(`✅ Refunded ₹${refundAmount} to both users`);
         
-        // Notify group with correct usernames
-        const creatorMention = creatorUser?.username ? `@${creatorUser.username}` : creatorDisplayName;
-        const acceptorMention = acceptorUser?.username ? `@${acceptorUser.username}` : acceptorDisplayName;
-        
+        // Notify group with usernames exactly as they appeared in confirmed message
         await sendTelegramMessage(
           update.message.chat.id,
           `✅ <b>Table #${tableNumber} Cancelled</b>\n\n` +
           `Refunded ₹${refundAmount.toFixed(2)} to both users:\n` +
-          `${creatorMention}\n` +
-          `${acceptorMention}`
+          `${creatorDisplayName}\n` +
+          `${acceptorDisplayName}`
         );
         
         // Notify both users
