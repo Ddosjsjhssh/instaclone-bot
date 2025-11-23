@@ -714,7 +714,7 @@ serve(async (req) => {
         const isUserAdmin = await isAdmin(supabase, acceptingUser.id);
         
         if (!isUserAdmin) {
-          await sendTelegramMessage(update.message.chat.id, '❌ Only admins can cancel tables.');
+          // Silently ignore non-admin cancel attempts
           return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
