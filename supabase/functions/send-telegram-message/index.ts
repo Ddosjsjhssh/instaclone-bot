@@ -24,12 +24,17 @@ serve(async (req) => {
 
     console.log('Sending table with auto-detected username:', username);
 
-    // Atomically cancel existing open tables and get their message IDs
+    // Generate random table number
+    const tableNumber = Math.floor(Math.random() * 9000) + 1000;
+    const currentTimestamp = new Date().toISOString();
+
+    // Atomically cancel existing open tables that are older than this request
     const { data: cancelledTables } = await supabase
       .from('tables')
       .update({ status: 'cancelled' })
       .eq('creator_telegram_user_id', telegram_user_id)
       .eq('status', 'open')
+      .lt('created_at', currentTimestamp)
       .select('id, message_id');
 
     if (cancelledTables && cancelledTables.length > 0) {
@@ -56,9 +61,6 @@ serve(async (req) => {
         }
       }
     }
-
-    // Generate random table number
-    const tableNumber = Math.floor(Math.random() * 9000) + 1000;
 
     // Format the message
     const optionsText = Object.entries(options)
