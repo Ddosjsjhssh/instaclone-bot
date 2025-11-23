@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { MongoClient } from "https://deno.land/x/mongo@v0.32.0/mod.ts";
+import { MongoClient } from "https://deno.land/x/mongo@v0.33.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,19 +12,25 @@ serve(async (req) => {
   }
 
   try {
-    const MONGODB_URI = Deno.env.get('MONGODB_URI');
-    
-    if (!MONGODB_URI) {
-      throw new Error('MONGODB_URI not configured');
-    }
-
     const { operation, collection, data, filter } = await req.json();
+    
+    console.log(`Received ${operation} request for collection: ${collection}`);
+    
+    // Use simple string connection for MongoDB Atlas
+    const MONGODB_URI = "mongodb+srv://Ludo:RpfS4DiD5eXvt4dz@cluster0.3zphwiq.mongodb.net/test?retryWrites=true&w=majority&authMechanism=SCRAM-SHA-256";
     
     console.log('Connecting to MongoDB...');
     const client = new MongoClient();
-    await client.connect(MONGODB_URI);
     
-    const db = client.database();
+    try {
+      await client.connect(MONGODB_URI);
+      console.log('Successfully connected to MongoDB');
+    } catch (connError) {
+      console.error('Connection failed:', connError);
+      throw new Error(`MongoDB connection failed: ${connError instanceof Error ? connError.message : 'Unknown error'}`);
+    }
+    
+    const db = client.database("test");
     const col = db.collection(collection || 'tables');
     
     let result;
@@ -57,7 +63,7 @@ serve(async (req) => {
     client.close();
     
     return new Response(
-      JSON.stringify({ success: true, result }),
+      JSON.stringify({ success: true, data: result }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
