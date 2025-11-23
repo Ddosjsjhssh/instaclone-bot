@@ -704,6 +704,156 @@ serve(async (req) => {
           }
         }
       }
+      
+      // Check if reply is "CANCEL" by admin to refund users
+      if (replyText === 'CANCEL') {
+        console.log('✓ Cancel request detected');
+        
+        // Check if user is admin
+        const isUserAdmin = await isAdmin(supabase, acceptingUser.id);
+        
+        if (!isUserAdmin) {
+          await sendTelegramMessage(update.message.chat.id, '❌ Only admins can cancel tables.');
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+        
+        // Parse the message to find table number
+        const tableNumberMatch = originalMessage.match(/Table #(\d+)/);
+        
+        if (!tableNumberMatch) {
+          await sendTelegramMessage(update.message.chat.id, '❌ Could not find table number in message.');
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+        
+        const tableNumber = parseInt(tableNumberMatch[1]);
+        console.log('🎯 Found table number:', tableNumber);
+        
+        // Find the matched table in database
+        const { data: tableRecord, error: tableError } = await supabase
+          .from('tables')
+          .select('*')
+          .eq('table_number', tableNumber)
+          .eq('status', 'matched')
+          .maybeSingle();
+        
+        if (tableError || !tableRecord) {
+          console.error('Error finding table:', tableError);
+          await sendTelegramMessage(
+            update.message.chat.id,
+            `❌ Table #${tableNumber} not found or already cancelled.`
+          );
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+        
+        console.log('Found table to cancel:', tableRecord);
+        
+        const refundAmount = tableRecord.amount;
+        const creatorId = tableRecord.creator_telegram_user_id;
+        const acceptorId = tableRecord.acceptor_telegram_user_id;
+        
+        // Get both users
+        const { data: creatorUser } = await supabase
+          .from('users')
+          .select('balance, username, telegram_first_name')
+          .eq('telegram_user_id', creatorId)
+          .maybeSingle();
+        
+        const { data: acceptorUser } = await supabase
+          .from('users')
+          .select('balance, username, telegram_first_name')
+          .eq('telegram_user_id', acceptorId)
+          .maybeSingle();
+        
+        if (!creatorUser || !acceptorUser) {
+          await sendTelegramMessage(
+            update.message.chat.id,
+            `❌ Could not find users for refund.`
+          );
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+        
+        // Refund both users
+        const { error: refundCreatorError } = await supabase
+          .from('users')
+          .update({ 
+            balance: creatorUser.balance + refundAmount,
+            updated_at: new Date().toISOString()
+          })
+          .eq('telegram_user_id', creatorId);
+        
+        const { error: refundAcceptorError } = await supabase
+          .from('users')
+          .update({ 
+            balance: acceptorUser.balance + refundAmount,
+            updated_at: new Date().toISOString()
+          })
+          .eq('telegram_user_id', acceptorId);
+        
+        if (refundCreatorError || refundAcceptorError) {
+          console.error('Error refunding balances:', refundCreatorError || refundAcceptorError);
+          await sendTelegramMessage(
+            update.message.chat.id,
+            `❌ Error processing refund. Please contact support.`
+          );
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+        
+        // Update table status
+        const { error: updateTableError } = await supabase
+          .from('tables')
+          .update({ 
+            status: 'cancelled',
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', tableRecord.id);
+        
+        if (updateTableError) {
+          console.error('Error updating table status:', updateTableError);
+        }
+        
+        console.log(`✅ Refunded ₹${refundAmount} to both users`);
+        
+        // Notify group
+        await sendTelegramMessage(
+          update.message.chat.id,
+          `✅ <b>Table #${tableNumber} Cancelled</b>\n\n` +
+          `Refunded ₹${refundAmount.toFixed(2)} to both users:\n` +
+          `@${creatorUser.username || creatorUser.telegram_first_name}\n` +
+          `@${acceptorUser.username || acceptorUser.telegram_first_name}`
+        );
+        
+        // Notify both users
+        await sendTelegramMessage(
+          creatorId,
+          `🔄 <b>Table Cancelled - Refund Issued</b>\n\n` +
+          `Table #${tableNumber} has been cancelled by admin.\n` +
+          `Refunded: ₹${refundAmount.toFixed(2)}\n` +
+          `New balance: ₹${(creatorUser.balance + refundAmount).toFixed(2)}`
+        );
+        
+        await sendTelegramMessage(
+          acceptorId,
+          `🔄 <b>Table Cancelled - Refund Issued</b>\n\n` +
+          `Table #${tableNumber} has been cancelled by admin.\n` +
+          `Refunded: ₹${refundAmount.toFixed(2)}\n` +
+          `New balance: ₹${(acceptorUser.balance + refundAmount).toFixed(2)}`
+        );
+      }
     }
 
     return new Response(
