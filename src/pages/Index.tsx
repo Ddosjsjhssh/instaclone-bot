@@ -210,11 +210,11 @@ const Index = () => {
     };
   }, [telegramUser?.id]);
 
-  // Last table request data
-  const lastTableRequest = {
-    amount: "600",
+  // Last table request data (loaded from database)
+  const [lastTableRequest, setLastTableRequest] = useState({
+    amount: "",
     type: "Full",
-    gamePlus: "0",
+    gamePlus: "",
     options: {
       freshId: false,
       codeAapDoge: false,
@@ -222,7 +222,56 @@ const Index = () => {
       noKingPass: false,
       autoLoss: false,
     }
-  };
+  });
+
+  // Load last table request from database
+  useEffect(() => {
+    const loadLastTable = async () => {
+      if (!telegramUser?.id) return;
+      
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        
+        const { data, error } = await supabase
+          .from('tables')
+          .select('*')
+          .eq('creator_telegram_user_id', telegramUser.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (data && !error) {
+          const gameTypeMatch = data.game_type;
+          const gamePlusMatch = data.options?.match(/Game\+: (\d+)/);
+          
+          const loadedData = {
+            amount: data.amount.toString(),
+            type: gameTypeMatch || "Full",
+            gamePlus: gamePlusMatch ? gamePlusMatch[1] : "",
+            options: {
+              freshId: data.options?.includes('freshId') || false,
+              codeAapDoge: data.options?.includes('codeAapDoge') || false,
+              noIphone: data.options?.includes('noIphone') || false,
+              noKingPass: data.options?.includes('noKingPass') || false,
+              autoLoss: data.options?.includes('autoLoss') || false,
+            }
+          };
+          
+          setLastTableRequest(loadedData);
+          
+          // Auto-populate form with last table data
+          setAmount(loadedData.amount);
+          setType(loadedData.type);
+          setGamePlus(loadedData.gamePlus);
+          setOptions(loadedData.options);
+        }
+      } catch (error) {
+        console.error('Error loading last table:', error);
+      }
+    };
+
+    loadLastTable();
+  }, [telegramUser?.id]);
 
   const amountButtons = [1000, 2000, 3000, 5000, 7000, 8000, 10000];
   const gamePlusButtons = [100, 200, 500, 1000];
@@ -314,6 +363,17 @@ const Index = () => {
         table_number: Math.floor(Math.random() * 9000) + 1000,
       };
 
+      // Build options string with all selected options
+      const selectedOptionsArray = [];
+      if (gamePlus) selectedOptionsArray.push(`Game+: ${gamePlus}`);
+      if (options.freshId) selectedOptionsArray.push('freshId');
+      if (options.codeAapDoge) selectedOptionsArray.push('codeAapDoge');
+      if (options.noIphone) selectedOptionsArray.push('noIphone');
+      if (options.noKingPass) selectedOptionsArray.push('noKingPass');
+      if (options.autoLoss) selectedOptionsArray.push('autoLoss');
+      
+      tableData.options = selectedOptionsArray.join(', ') || null;
+
       const { error: dbError } = await supabase
         .from('tables')
         .insert(tableData);
@@ -321,12 +381,15 @@ const Index = () => {
       if (dbError) {
         console.error('Database save error:', dbError);
         toast.warning("Sent to Telegram but failed to save to database");
+      } else {
+        // Update last table request after successful save
+        setLastTableRequest({
+          amount,
+          type,
+          gamePlus,
+          options
+        });
       }
-
-      const selectedOptions = Object.entries(options)
-        .filter(([_, value]) => value)
-        .map(([key]) => key)
-        .join(", ") || "None";
 
       toast.success("Table sent successfully!", {
         description: `Sent to Telegram and saved to database. Amount: ₹${amount}`,
