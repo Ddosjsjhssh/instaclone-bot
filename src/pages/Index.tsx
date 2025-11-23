@@ -94,15 +94,13 @@ const Index = () => {
     try {
       const { supabase } = await import("@/integrations/supabase/client");
       
-      const { data, error } = await supabase.functions.invoke('mongodb-operations', {
-        body: {
-          operation: 'find',
-          collection: 'admins',
-          filter: { telegram_user_id: telegramUserId },
-        },
-      });
+      const { data, error } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('telegram_user_id', telegramUserId)
+        .maybeSingle();
 
-      if (!error && data?.result && data.result.length > 0) {
+      if (!error && data) {
         setIsAdmin(true);
         console.log('Admin access granted');
       }
@@ -117,21 +115,54 @@ const Index = () => {
     try {
       const { supabase } = await import("@/integrations/supabase/client");
       
-      const { data, error } = await supabase.functions.invoke('mongodb-operations', {
-        body: {
-          operation: 'find',
-          collection: 'users',
-          filter: { telegram_user_id: telegramUserId },
-        },
-      });
+      const { data, error } = await supabase
+        .from('users')
+        .select('balance')
+        .eq('telegram_user_id', telegramUserId)
+        .maybeSingle();
 
-      if (!error && data?.result && data.result.length > 0) {
-        setUserBalance(data.result[0].balance || 0);
+      if (!error && data) {
+        setUserBalance(data.balance || 0);
       }
     } catch (error) {
       console.error('Error getting user balance:', error);
     }
   };
+
+  // Subscribe to real-time balance updates
+  useEffect(() => {
+    if (!telegramUser?.id) return;
+
+    const setupRealtimeSubscription = async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      const channel = supabase
+        .channel('balance-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'users',
+            filter: `telegram_user_id=eq.${telegramUser.id}`
+          },
+          (payload) => {
+            console.log('Balance updated:', payload);
+            if (payload.new && 'balance' in payload.new) {
+              setUserBalance(payload.new.balance);
+              toast.success(`Balance updated: ₹${payload.new.balance.toFixed(2)}`);
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    setupRealtimeSubscription();
+  }, [telegramUser?.id]);
 
   // Last table request data
   const lastTableRequest = {
@@ -195,29 +226,22 @@ const Index = () => {
 
       if (telegramError) throw telegramError;
 
-      // Save to MongoDB
+      // Save to Supabase tables
       const tableData = {
-        username: telegramUsername || 'Anonymous',
-        telegram_user_id: telegramUser?.id,
-        telegram_first_name: telegramUser?.first_name,
-        amount,
-        type,
-        gamePlus: gamePlus || "0",
-        options,
-        balance: userBalance,
-        timestamp: new Date().toISOString(),
+        creator_telegram_user_id: telegramUser?.id,
+        amount: parseFloat(amount),
+        game_type: type,
+        options: gamePlus ? `Game+: ${gamePlus}` : null,
+        status: 'open',
+        table_number: Math.floor(Math.random() * 9000) + 1000,
       };
 
-      const { data: mongoData, error: mongoError } = await supabase.functions.invoke('mongodb-operations', {
-        body: {
-          operation: 'insert',
-          collection: 'tables',
-          data: tableData,
-        },
-      });
+      const { error: dbError } = await supabase
+        .from('tables')
+        .insert(tableData);
 
-      if (mongoError) {
-        console.error('MongoDB save error:', mongoError);
+      if (dbError) {
+        console.error('Database save error:', dbError);
         toast.warning("Sent to Telegram but failed to save to database");
       }
 
