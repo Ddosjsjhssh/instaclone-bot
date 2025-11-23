@@ -172,19 +172,42 @@ serve(async (req) => {
           });
         }
 
-        // Get user's current balance
-        const { data: user, error: userError } = await supabase
+        // Get user's current balance, or create user if not exists
+        let { data: user, error: userError } = await supabase
           .from('users')
           .select('*')
           .eq('telegram_user_id', targetUserId)
           .maybeSingle();
 
-        if (userError || !user) {
-          await sendTelegramMessage(chatId, '❌ User not found.');
+        if (userError) {
+          await sendTelegramMessage(chatId, '❌ Database error occurred.');
           return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
           });
+        }
+
+        // If user doesn't exist, create them
+        if (!user) {
+          const { data: newUser, error: createError } = await supabase
+            .from('users')
+            .insert({
+              telegram_user_id: targetUserId,
+              balance: 0
+            })
+            .select()
+            .single();
+
+          if (createError || !newUser) {
+            await sendTelegramMessage(chatId, '❌ Failed to create user.');
+            return new Response(JSON.stringify({ success: true }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            });
+          }
+          
+          user = newUser;
+          console.log(`✅ New user created: ${targetUserId}`);
         }
 
         const newBalance = (user.balance || 0) + amount;
@@ -229,19 +252,42 @@ serve(async (req) => {
           });
         }
 
-        // Get user's current balance
-        const { data: user, error: userError } = await supabase
+        // Get user's current balance, or create user if not exists
+        let { data: user, error: userError } = await supabase
           .from('users')
           .select('*')
           .eq('telegram_user_id', targetUserId)
           .maybeSingle();
 
-        if (userError || !user) {
-          await sendTelegramMessage(chatId, '❌ User not found.');
+        if (userError) {
+          await sendTelegramMessage(chatId, '❌ Database error occurred.');
           return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
           });
+        }
+
+        // If user doesn't exist, create them with 0 balance
+        if (!user) {
+          const { data: newUser, error: createError } = await supabase
+            .from('users')
+            .insert({
+              telegram_user_id: targetUserId,
+              balance: 0
+            })
+            .select()
+            .single();
+
+          if (createError || !newUser) {
+            await sendTelegramMessage(chatId, '❌ Failed to create user.');
+            return new Response(JSON.stringify({ success: true }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            });
+          }
+          
+          user = newUser;
+          console.log(`✅ New user created: ${targetUserId}`);
         }
 
         const newBalance = (user.balance || 0) - amount;
@@ -293,19 +339,42 @@ serve(async (req) => {
           });
         }
 
-        // Check if user already exists in users table
-        const { data: user, error: userError } = await supabase
+        // Get or create user
+        let { data: user, error: userError } = await supabase
           .from('users')
           .select('*')
           .eq('telegram_user_id', targetUserId)
           .maybeSingle();
 
-        if (userError || !user) {
-          await sendTelegramMessage(chatId, '❌ User not found in the system.');
+        if (userError) {
+          await sendTelegramMessage(chatId, '❌ Database error occurred.');
           return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
           });
+        }
+
+        // If user doesn't exist, create them
+        if (!user) {
+          const { data: newUser, error: createError } = await supabase
+            .from('users')
+            .insert({
+              telegram_user_id: targetUserId,
+              balance: 0
+            })
+            .select()
+            .single();
+
+          if (createError || !newUser) {
+            await sendTelegramMessage(chatId, '❌ Failed to create user.');
+            return new Response(JSON.stringify({ success: true }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            });
+          }
+          
+          user = newUser;
+          console.log(`✅ New user created: ${targetUserId}`);
         }
 
         // Check if already admin
