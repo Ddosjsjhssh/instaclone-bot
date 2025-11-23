@@ -46,6 +46,7 @@ const Index = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [userBalance, setUserBalance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Initialize Telegram Mini App and get user data
   useEffect(() => {
@@ -60,21 +61,26 @@ const Index = () => {
           setTelegramUser(user);
           if (user.username) {
             setTelegramUsername(user.username);
-            console.log('Telegram user detected:', user.username);
+            console.log('✅ Telegram user detected:', user.username, 'ID:', user.id);
           } else {
             console.log('Telegram user has no username');
             toast.info(`Welcome ${user.first_name}! (No username set in Telegram)`);
           }
 
-          // Check if user is admin and get balance
+          // Check if user is admin
+          console.log('🔍 Checking admin status...');
           await checkAdminStatus(user.id);
+          
+          // Get user balance
+          console.log('💰 Fetching user balance...');
           await getUserBalance(user.id);
         } else {
-          console.log('Not running in Telegram Mini App');
+          console.log('❌ Not running in Telegram Mini App');
           toast.info("Open this app in Telegram for automatic username detection");
           setCheckingAdmin(false);
         }
       } else {
+        console.log('❌ Telegram WebApp not available');
         setCheckingAdmin(false);
       }
     };
@@ -113,19 +119,31 @@ const Index = () => {
         .eq('telegram_user_id', telegramUserId)
         .maybeSingle();
 
-      console.log('Fetching balance for user:', telegramUserId);
-      console.log('Balance data:', data);
+      console.log('📊 Fetching balance for user:', telegramUserId);
+      console.log('📊 Balance data received:', data);
 
       if (!error && data) {
         const balance = typeof data.balance === 'number' ? data.balance : parseFloat(data.balance || '0');
-        console.log('Setting balance to:', balance);
+        console.log('💰 Setting balance to:', balance);
         setUserBalance(balance);
+        return balance;
       } else if (error) {
-        console.error('Error fetching balance:', error);
+        console.error('❌ Error fetching balance:', error);
       }
+      return 0;
     } catch (error) {
-      console.error('Error getting user balance:', error);
+      console.error('❌ Error getting user balance:', error);
+      return 0;
     }
+  };
+
+  const refreshBalance = async () => {
+    if (!telegramUser?.id) return;
+    setIsRefreshing(true);
+    console.log('🔄 Manually refreshing balance...');
+    const newBalance = await getUserBalance(telegramUser.id);
+    toast.success(`Balance refreshed: ₹${newBalance.toFixed(2)}`);
+    setIsRefreshing(false);
   };
 
   // Subscribe to real-time balance updates
@@ -333,11 +351,22 @@ const Index = () => {
           </Card>
         )}
 
-        {/* Balance */}
+        {/* Balance with Refresh Button */}
         <div className="flex justify-between items-center border-b border-border pb-1.5">
           <h3 className="text-sm font-semibold">Table Details</h3>
-          <div className="text-[11px] font-medium text-green-600">
-            💵 Balance: ₹{userBalance.toFixed(2)}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshBalance}
+              disabled={isRefreshing}
+              className="h-6 w-6 p-0"
+            >
+              {isRefreshing ? '⏳' : '🔄'}
+            </Button>
+            <div className="text-[11px] font-medium text-green-600">
+              💵 Balance: ₹{userBalance.toFixed(2)}
+            </div>
           </div>
         </div>
 
