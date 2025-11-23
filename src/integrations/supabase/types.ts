@@ -44,6 +44,7 @@ export type Database = {
           creator_telegram_user_id: number
           game_type: string
           id: string
+          message_id: number | null
           options: string | null
           status: string
           table_number: number
@@ -56,6 +57,7 @@ export type Database = {
           creator_telegram_user_id: number
           game_type: string
           id?: string
+          message_id?: number | null
           options?: string | null
           status?: string
           table_number: number
@@ -68,6 +70,7 @@ export type Database = {
           creator_telegram_user_id?: number
           game_type?: string
           id?: string
+          message_id?: number | null
           options?: string | null
           status?: string
           table_number?: number
