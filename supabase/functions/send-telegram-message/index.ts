@@ -14,7 +14,7 @@ serve(async (req) => {
     const { username, telegram_user_id, telegram_first_name, amount, type, gamePlus, options, balance } = await req.json();
 
     const TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho";
-    const TELEGRAM_GROUP_CHAT_ID = "-5082338946";
+    const TELEGRAM_GROUP_CHAT_ID = "-1003390034266";
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
