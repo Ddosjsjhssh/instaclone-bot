@@ -529,8 +529,15 @@ serve(async (req) => {
       else if (command === '/sendpinbutton') {
         const TELEGRAM_GROUP_CHAT_ID = "-1003390034266";
         
-        // Create the mini app URL
-        const miniAppUrl = `https://d70c826e-49fc-498b-868b-28028e643a08.lovableproject.com?tgWebAppStartParam=group`;
+        // Get bot username first
+        const botInfoResponse = await fetch(
+          `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe`
+        );
+        const botInfo = await botInfoResponse.json();
+        const botUsername = botInfo.result.username;
+        
+        // Create the mini app URL using bot username
+        const miniAppUrl = `https://t.me/${botUsername}/app`;
         
         // Send message with inline button to the group
         const message = "🎲 <b>Deep Night Ludo Club</b>\n\n✅ अपना टेबल लगाने के लिए नीचे बटन दबाएं\n💰 Balance automatically checked\n🎮 Last table settings auto-loaded\n\n<b>👇 यहाँ क्लिक करें 👇</b>";
@@ -547,9 +554,9 @@ serve(async (req) => {
               reply_markup: {
                 inline_keyboard: [[
                   {
-                    text: "🎮 Place New Table - Open Mini App",
+                    text: "🎮 Place New Table",
                     web_app: {
-                      url: miniAppUrl
+                      url: `https://d70c826e-49fc-498b-868b-28028e643a08.lovableproject.com`
                     }
                   }
                 ]]
@@ -559,10 +566,11 @@ serve(async (req) => {
         );
         
         const result = await response.json();
+        console.log('Send button result:', JSON.stringify(result, null, 2));
         
         if (!result.ok) {
           console.error('Telegram API error:', result);
-          await sendTelegramMessage(chatId, '❌ Failed to send button to group');
+          await sendTelegramMessage(chatId, `❌ Failed to send button: ${result.description || 'Unknown error'}`);
         } else {
           await sendTelegramMessage(chatId, '✅ Button sent to group successfully! You can now pin this message.');
         }
