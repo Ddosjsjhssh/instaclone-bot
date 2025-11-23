@@ -536,7 +536,7 @@ serve(async (req) => {
         const botInfo = await botInfoResponse.json();
         const botUsername = botInfo.result.username;
         
-        // Create the mini app URL using bot username
+        // Create the mini app URL using t.me format
         const miniAppUrl = `https://t.me/${botUsername}/app`;
         
         // Send message with inline button to the group
@@ -555,9 +555,7 @@ serve(async (req) => {
                 inline_keyboard: [[
                   {
                     text: "🎮 Place New Table",
-                    web_app: {
-                      url: `https://d70c826e-49fc-498b-868b-28028e643a08.lovableproject.com`
-                    }
+                    url: miniAppUrl
                   }
                 ]]
               }
