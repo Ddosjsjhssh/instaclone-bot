@@ -24,6 +24,50 @@ serve(async (req) => {
 
     console.log('Sending table with auto-detected username:', username);
 
+    // Check for existing open tables by this user and delete them
+    const { data: existingTables } = await supabase
+      .from('tables')
+      .select('id, message_id')
+      .eq('creator_telegram_user_id', telegram_user_id)
+      .eq('status', 'open');
+
+    if (existingTables && existingTables.length > 0) {
+      console.log(`Found ${existingTables.length} existing open table(s) for user ${telegram_user_id}`);
+      
+      for (const oldTable of existingTables) {
+        // Delete old message from Telegram group
+        if (oldTable.message_id) {
+          try {
+            const deleteResponse = await fetch(
+              `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/deleteMessage`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: TELEGRAM_GROUP_CHAT_ID,
+                  message_id: oldTable.message_id
+                })
+              }
+            );
+            
+            if (deleteResponse.ok) {
+              console.log(`✅ Deleted old table message ${oldTable.message_id} from group`);
+            }
+          } catch (error) {
+            console.error('Error deleting old message:', error);
+          }
+        }
+
+        // Update old table status to cancelled
+        await supabase
+          .from('tables')
+          .update({ status: 'cancelled' })
+          .eq('id', oldTable.id);
+        
+        console.log(`✅ Cancelled old table ${oldTable.id}`);
+      }
+    }
+
     // Generate random table number
     const tableNumber = Math.floor(Math.random() * 9000) + 1000;
 
