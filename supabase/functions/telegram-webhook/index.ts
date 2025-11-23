@@ -882,6 +882,19 @@ serve(async (req) => {
           });
         }
         
+        // Extract winner username from reply (e.g., "WIN @username")
+        const winnerMentionMatch = replyText.match(/@(\w+)/);
+        
+        if (!winnerMentionMatch) {
+          // No username mentioned, silently ignore
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+        
+        const winnerUsername = winnerMentionMatch[1];
+        
         // Parse the message to find table number
         const tableNumberMatch = originalMessage.match(/Table #(\d+)/);
         
@@ -896,33 +909,10 @@ serve(async (req) => {
         const tableNumber = parseInt(tableNumberMatch[1]);
         console.log('🎯 Found table number for win:', tableNumber);
         
-        // Extract winner username from reply or original message
-        let winnerUsername = '';
-        
-        // First try to get username from the WIN reply (e.g., "WIN @username")
-        const winnerMentionMatch = replyText.match(/@(\w+)/);
-        if (winnerMentionMatch) {
-          winnerUsername = winnerMentionMatch[1];
-        }
-        
-        // If no username in reply, extract both usernames from original message
-        if (!winnerUsername) {
-          const usernamesMatch = originalMessage.match(/@(\w+)\s+Vs\.\s+@(\w+)/);
-          if (usernamesMatch) {
-            // Default to first username if not specified
-            winnerUsername = usernamesMatch[1];
-          }
-        }
-        
         // Send winner message to the group
-        let winMessage = `Winner 🏆🥇 🏆\n\nTable #${tableNumber}`;
-        if (winnerUsername) {
-          winMessage = `Winner 🏆🥇 🏆\n\n@${winnerUsername}\n\nTable #${tableNumber}`;
-        }
-        
         await sendTelegramMessage(
           update.message.chat.id,
-          winMessage
+          `Winner 🏆🥇 🏆\n\n@${winnerUsername}\n\nTable #${tableNumber}`
         );
       }
     }
