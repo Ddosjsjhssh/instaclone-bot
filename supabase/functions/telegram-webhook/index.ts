@@ -1003,18 +1003,35 @@ serve(async (req) => {
           });
         }
         
-        // Extract winner username from reply (e.g., "WIN @username")
-        const winnerMentionMatch = replyText.match(/@(\w+)/);
+        // Extract winner from reply - can be @username OR text_mention (name without @)
+        let winnerDisplayName = '';
+        let winnerTelegramIdFromReply: number | null = null;
         
-        if (!winnerMentionMatch) {
-          // No username mentioned, silently ignore
+        // Check for @username mention first
+        const winnerMentionMatch = replyText.match(/@(\w+)/);
+        if (winnerMentionMatch) {
+          winnerDisplayName = `@${winnerMentionMatch[1]}`;
+        } else {
+          // Check for text_mention entities (users without @username)
+          const replyEntities = update.message.entities || [];
+          const textMentionEntity = replyEntities.find((e: any) => e.type === 'text_mention');
+          
+          if (textMentionEntity && textMentionEntity.user) {
+            winnerTelegramIdFromReply = textMentionEntity.user.id;
+            winnerDisplayName = textMentionEntity.user.first_name || 'User';
+            console.log(`🎯 Winner from text_mention: ${winnerDisplayName} (ID: ${winnerTelegramIdFromReply})`);
+          }
+        }
+        
+        if (!winnerDisplayName) {
+          // No winner mentioned, silently ignore
           return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
           });
         }
         
-        const winnerUsername = winnerMentionMatch[1];
+        console.log(`🏆 Winner reply detected: ${winnerDisplayName}`);
         
         // Parse the message to find table number
         const tableNumberMatch = originalMessage.match(/Table #(\d+)/);
@@ -1053,33 +1070,42 @@ serve(async (req) => {
         console.log(`💰 Bet per user: ₹${betAmount}, Commission (5% from one bet): ₹${commission}, Winner gets: ₹${winnerAmount}`);
 
         // Determine winner telegram_user_id from table data
-        // Check original message for usernames and match with table creator/acceptor
-        const originalText = update.message.reply_to_message.text.toLowerCase();
         let winnerTelegramUserId: number | null = null;
-
-        // Extract both usernames from original message
-        const allMentions = update.message.reply_to_message.text.match(/@(\w+)/g);
-        console.log(`📋 All mentions in original message: ${JSON.stringify(allMentions)}`);
-
-        if (allMentions && allMentions.length >= 2) {
-          // Check if winner username matches first or second player
-          const firstPlayerUsername = allMentions[0].substring(1).toLowerCase(); // Remove @
-          const secondPlayerUsername = allMentions[1].substring(1).toLowerCase(); // Remove @
-          
-          console.log(`🎮 Player 1: @${firstPlayerUsername}, Player 2: @${secondPlayerUsername}`);
-          console.log(`🏆 Winner mentioned: @${winnerUsername.toLowerCase()}`);
-
-          if (winnerUsername.toLowerCase() === firstPlayerUsername) {
+        
+        // If we got winner ID directly from text_mention, use it to match
+        if (winnerTelegramIdFromReply) {
+          if (winnerTelegramIdFromReply === tableData.creator_telegram_user_id) {
             winnerTelegramUserId = tableData.creator_telegram_user_id;
-            console.log(`✓ Winner is Player 1 (creator): ${winnerTelegramUserId}`);
-          } else if (winnerUsername.toLowerCase() === secondPlayerUsername) {
+            console.log(`✓ Winner is Player 1 (creator) by ID match: ${winnerTelegramUserId}`);
+          } else if (winnerTelegramIdFromReply === tableData.acceptor_telegram_user_id) {
             winnerTelegramUserId = tableData.acceptor_telegram_user_id;
-            console.log(`✓ Winner is Player 2 (acceptor): ${winnerTelegramUserId}`);
+            console.log(`✓ Winner is Player 2 (acceptor) by ID match: ${winnerTelegramUserId}`);
+          }
+        } else {
+          // Match by @username from original message
+          const allMentions = update.message.reply_to_message.text.match(/@(\w+)/g);
+          console.log(`📋 All @mentions in original message: ${JSON.stringify(allMentions)}`);
+
+          if (allMentions && allMentions.length >= 2) {
+            const winnerUsernameLower = winnerDisplayName.substring(1).toLowerCase(); // Remove @
+            const firstPlayerUsername = allMentions[0].substring(1).toLowerCase(); // Remove @
+            const secondPlayerUsername = allMentions[1].substring(1).toLowerCase(); // Remove @
+            
+            console.log(`🎮 Player 1: @${firstPlayerUsername}, Player 2: @${secondPlayerUsername}`);
+            console.log(`🏆 Winner mentioned: @${winnerUsernameLower}`);
+
+            if (winnerUsernameLower === firstPlayerUsername) {
+              winnerTelegramUserId = tableData.creator_telegram_user_id;
+              console.log(`✓ Winner is Player 1 (creator): ${winnerTelegramUserId}`);
+            } else if (winnerUsernameLower === secondPlayerUsername) {
+              winnerTelegramUserId = tableData.acceptor_telegram_user_id;
+              console.log(`✓ Winner is Player 2 (acceptor): ${winnerTelegramUserId}`);
+            }
           }
         }
 
         if (!winnerTelegramUserId) {
-          await sendTelegramMessage(update.message.chat.id, `❌ Could not determine winner. Make sure @${winnerUsername} is one of the players in this table.`);
+          await sendTelegramMessage(update.message.chat.id, `❌ Could not determine winner. Make sure ${winnerDisplayName} is one of the players in this table.`);
           return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
@@ -1129,7 +1155,7 @@ serve(async (req) => {
           })
           .eq('table_number', tableNumber);
 
-        console.log(`✅ Winner @${winnerUsername} received ₹${winnerAmount}. New balance: ₹${newBalance}`);
+        console.log(`✅ Winner ${winnerDisplayName} received ₹${winnerAmount}. New balance: ₹${newBalance}`);
 
         // Notify winner
         await sendTelegramMessage(
@@ -1137,11 +1163,54 @@ serve(async (req) => {
           `🎉 Congratulations! You won ₹${winnerAmount.toFixed(2)}!\n\nTable #${tableNumber}\nNew balance: ₹${newBalance.toFixed(2)}`
         );
 
-        // Send winner message to the group
-        await sendTelegramMessage(
-          update.message.chat.id,
-          `Winner 🏆🥇 🏆\n\n@${winnerUsername}\n\nTable #${tableNumber}`
+        // Send winner message to the group with proper entities for clickable name
+        let winnerMessageText = `Winner 🏆🥇🏆\n\n`;
+        const winnerEntities: any[] = [];
+        
+        const nameOffset = winnerMessageText.length;
+        winnerMessageText += winnerDisplayName;
+        
+        // If winner doesn't have @ (no username), add text_mention entity to make it blue/clickable
+        if (!winnerDisplayName.startsWith('@')) {
+          winnerEntities.push({
+            offset: nameOffset,
+            length: winnerDisplayName.length,
+            type: 'text_mention',
+            user: {
+              id: winnerTelegramUserId,
+              first_name: winnerDisplayName
+            }
+          });
+        }
+        
+        winnerMessageText += `\n\nTable #${tableNumber}`;
+        
+        console.log('Winner message text:', winnerMessageText);
+        console.log('Winner message entities:', JSON.stringify(winnerEntities));
+        
+        // Send winner announcement (DO NOT use parse_mode when using entities)
+        const winnerMessagePayload: any = {
+          chat_id: update.message.chat.id,
+          text: winnerMessageText
+        };
+        
+        if (winnerEntities.length > 0) {
+          winnerMessagePayload.entities = winnerEntities;
+        }
+        
+        const winnerResponse = await fetch(
+          `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(winnerMessagePayload),
+          }
         );
+        
+        if (!winnerResponse.ok) {
+          const errorData = await winnerResponse.json();
+          console.error('Failed to send winner message:', errorData);
+        }
       }
     }
 
