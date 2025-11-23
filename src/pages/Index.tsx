@@ -51,12 +51,17 @@ const Index = () => {
   // Initialize Telegram Mini App and get user data
   useEffect(() => {
     const initializeApp = async () => {
+      console.log('🚀 Initializing mini app...');
+      console.log('📱 Telegram WebApp available:', !!window.Telegram?.WebApp);
+      
       if (window.Telegram?.WebApp) {
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
 
         const user = tg.initDataUnsafe?.user;
+        console.log('👤 Telegram user data:', user);
+        
         if (user) {
           setTelegramUser(user);
           if (user.username) {
@@ -69,13 +74,19 @@ const Index = () => {
 
           // Check if user is admin
           console.log('🔍 Checking admin status...');
-          await checkAdminStatus(user.id);
+          const adminResult = await checkAdminStatus(user.id);
+          console.log('👑 Is admin:', adminResult);
           
-          // Get user balance
-          console.log('💰 Fetching user balance...');
-          await getUserBalance(user.id);
+          // Get user balance - CRITICAL STEP
+          console.log('💰 Fetching user balance for ID:', user.id);
+          const balance = await getUserBalance(user.id);
+          console.log('✅ Balance loaded:', balance);
+          
+          if (balance > 0) {
+            toast.success(`Welcome! Your balance: ₹${balance.toFixed(2)}`);
+          }
         } else {
-          console.log('❌ Not running in Telegram Mini App');
+          console.log('❌ Not running in Telegram Mini App - no user data');
           toast.info("Open this app in Telegram for automatic username detection");
           setCheckingAdmin(false);
         }
@@ -100,10 +111,13 @@ const Index = () => {
 
       if (!error && data) {
         setIsAdmin(true);
-        console.log('Admin access granted');
+        console.log('✅ Admin access granted');
+        return true;
       }
+      return false;
     } catch (error) {
-      console.error('Error checking admin status:', error);
+      console.error('❌ Error checking admin status:', error);
+      return false;
     } finally {
       setCheckingAdmin(false);
     }
@@ -302,9 +316,10 @@ const Index = () => {
   if (checkingAdmin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center space-y-2">
           <div className="text-2xl mb-2">⏳</div>
-          <div className="text-sm text-muted-foreground">Loading...</div>
+          <div className="text-sm text-muted-foreground">Loading your account...</div>
+          <div className="text-xs text-muted-foreground">Connecting to Telegram...</div>
         </div>
       </div>
     );
@@ -360,12 +375,13 @@ const Index = () => {
               size="sm"
               onClick={refreshBalance}
               disabled={isRefreshing}
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 hover:bg-primary/10"
+              title="Refresh balance"
             >
               {isRefreshing ? '⏳' : '🔄'}
             </Button>
-            <div className="text-[11px] font-medium text-green-600">
-              💵 Balance: ₹{userBalance.toFixed(2)}
+            <div className="text-[11px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
+              💵 Balance: ₹{userBalance?.toFixed(2) || '0.00'}
             </div>
           </div>
         </div>
