@@ -1,7 +1,26 @@
 project_id = "jurzzgvupmgfffdodpmz"
 
+[functions.mongodb-operations]
+verify_jwt = false
+
+[functions.mongodb-operations.env]
+MONGODB_URI = "env.MONGODB_URI"
+
 [functions.telegram-webhook]
 verify_jwt = false
 
+[functions.telegram-webhook.env]
+MONGODB_URI = "env.MONGODB_URI"
+TELEGRAM_BOT_TOKEN = "env.TELEGRAM_BOT_TOKEN"
+
 [functions.send-telegram-message]
 verify_jwt = false
+
+[functions.send-telegram-message.env]
+TELEGRAM_BOT_TOKEN = "env.TELEGRAM_BOT_TOKEN"
+
+[functions.initialize-admin]
+verify_jwt = false
+
+[functions.initialize-admin.env]
+MONGODB_URI = "env.MONGODB_URI"
