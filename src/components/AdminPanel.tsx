@@ -18,6 +18,7 @@ export const AdminPanel = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [fundAmount, setFundAmount] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sendingButton, setSendingButton] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -108,6 +109,38 @@ export const AdminPanel = () => {
     }
   };
 
+  const handleSendPinButton = async () => {
+    setSendingButton(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      // Get current user's telegram ID from Telegram WebApp
+      const telegramUserId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id;
+      
+      if (!telegramUserId) {
+        toast.error("Could not get your Telegram user ID");
+        return;
+      }
+      
+      const { data, error } = await supabase.functions.invoke('send-pin-button', {
+        body: { telegram_user_id: telegramUserId }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast.success("✅ Button sent to group! You can now pin this message.");
+      } else {
+        throw new Error(data?.error || "Failed to send button");
+      }
+    } catch (error: any) {
+      console.error('Error sending pin button:', error);
+      toast.error(error.message || "Failed to send button to group");
+    } finally {
+      setSendingButton(false);
+    }
+  };
+
   const filteredUsers = users.filter(user => 
     user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.telegram_first_name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -129,6 +162,25 @@ export const AdminPanel = () => {
           </Button>
         </div>
       </header>
+
+      {/* Send Pin Button Card */}
+      <div className="p-4">
+        <Card className="p-4 bg-primary/10 border-primary">
+          <div className="space-y-2">
+            <h3 className="font-semibold text-sm">📌 Send Pinnable Button</h3>
+            <p className="text-xs text-muted-foreground">
+              Send a button to the group that users can click to open the mini app
+            </p>
+            <Button 
+              onClick={handleSendPinButton}
+              disabled={sendingButton}
+              className="w-full"
+            >
+              {sendingButton ? "Sending..." : "🎮 Send Button to Group"}
+            </Button>
+          </div>
+        </Card>
+      </div>
 
       <div className="p-4 space-y-4">
         {/* Search */}
