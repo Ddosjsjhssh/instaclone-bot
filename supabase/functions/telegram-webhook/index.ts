@@ -646,9 +646,55 @@ serve(async (req) => {
           
           console.log('Options:', options);
           
-          // Format the message exactly like the reference image
-          let formattedMessage = `@${originalUsername} Vs. @${acceptingUsername}\n\n`;
-          formattedMessage += `Rs.${betAmount}.00 | ${gameType}`;
+          // Format the message with mentions
+          // Check if users have usernames
+          const creatorHasUsername = creatorUserData?.username;
+          const acceptorHasUsername = acceptingUser.username;
+          
+          // Build message text and entities for mentions
+          let formattedMessage = '';
+          const entities: any[] = [];
+          let currentOffset = 0;
+          
+          // Add creator mention
+          if (creatorHasUsername) {
+            formattedMessage += `@${originalUsername}`;
+          } else {
+            const displayName = creatorUserData?.telegram_first_name || originalUsername;
+            formattedMessage += displayName;
+            entities.push({
+              offset: currentOffset,
+              length: displayName.length,
+              type: 'text_mention',
+              user: {
+                id: creatorTelegramId,
+                first_name: displayName
+              }
+            });
+          }
+          currentOffset = formattedMessage.length;
+          
+          formattedMessage += ' Vs. ';
+          currentOffset = formattedMessage.length;
+          
+          // Add acceptor mention
+          if (acceptorHasUsername) {
+            formattedMessage += `@${acceptingUsername}`;
+          } else {
+            const displayName = acceptingUser.first_name || acceptingUsername;
+            formattedMessage += displayName;
+            entities.push({
+              offset: currentOffset,
+              length: displayName.length,
+              type: 'text_mention',
+              user: {
+                id: acceptorTelegramId,
+                first_name: displayName
+              }
+            });
+          }
+          
+          formattedMessage += `\n\nRs.${betAmount}.00 | ${gameType}`;
           
           if (options) {
             formattedMessage += `\n${options}`;
@@ -658,8 +704,18 @@ serve(async (req) => {
           formattedMessage += `Table #${matchTableNumber}`;
           
           console.log('Sending formatted message:', formattedMessage);
+          console.log('With entities:', JSON.stringify(entities));
           
-          // Send the formatted message
+          // Send the formatted message with entities
+          const messagePayload: any = {
+            chat_id: update.message.chat.id,
+            text: formattedMessage,
+          };
+          
+          if (entities.length > 0) {
+            messagePayload.entities = entities;
+          }
+          
           const telegramResponse = await fetch(
             `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
             {
@@ -667,10 +723,7 @@ serve(async (req) => {
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({
-                chat_id: update.message.chat.id,
-                text: formattedMessage,
-              }),
+              body: JSON.stringify(messagePayload),
             }
           );
 
