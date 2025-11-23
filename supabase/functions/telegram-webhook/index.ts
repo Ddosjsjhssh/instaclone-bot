@@ -909,6 +909,80 @@ serve(async (req) => {
         const tableNumber = parseInt(tableNumberMatch[1]);
         console.log('🎯 Found table number for win:', tableNumber);
         
+        // Get table details
+        const { data: tableData, error: tableError } = await supabase
+          .from('tables')
+          .select('*')
+          .eq('table_number', tableNumber)
+          .eq('status', 'matched')
+          .maybeSingle();
+
+        if (tableError || !tableData) {
+          await sendTelegramMessage(update.message.chat.id, '❌ Could not find table or table already completed.');
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        const betAmount = tableData.amount;
+        const totalPot = betAmount * 2;
+        const commission = totalPot * 0.05;
+        const winnerAmount = totalPot - commission;
+
+        console.log(`💰 Bet: ₹${betAmount}, Total Pot: ₹${totalPot}, Commission (5%): ₹${commission}, Winner gets: ₹${winnerAmount}`);
+
+        // Find winner by username
+        const { data: winnerUser, error: winnerError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('username', winnerUsername)
+          .maybeSingle();
+
+        if (winnerError || !winnerUser) {
+          await sendTelegramMessage(update.message.chat.id, `❌ Could not find user @${winnerUsername}`);
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        // Update winner's balance
+        const newBalance = winnerUser.balance + winnerAmount;
+        const { error: updateBalanceError } = await supabase
+          .from('users')
+          .update({ 
+            balance: newBalance,
+            updated_at: new Date().toISOString()
+          })
+          .eq('telegram_user_id', winnerUser.telegram_user_id);
+
+        if (updateBalanceError) {
+          console.error('Error updating winner balance:', updateBalanceError);
+          await sendTelegramMessage(update.message.chat.id, '❌ Failed to update winner balance.');
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        // Update table status to completed
+        await supabase
+          .from('tables')
+          .update({ 
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          })
+          .eq('table_number', tableNumber);
+
+        console.log(`✅ Winner @${winnerUsername} received ₹${winnerAmount}. New balance: ₹${newBalance}`);
+
+        // Notify winner
+        await sendTelegramMessage(
+          winnerUser.telegram_user_id,
+          `🎉 Congratulations! You won ₹${winnerAmount.toFixed(2)}!\n\nTable #${tableNumber}\nNew balance: ₹${newBalance.toFixed(2)}`
+        );
+
         // Send winner message to the group
         await sendTelegramMessage(
           update.message.chat.id,
