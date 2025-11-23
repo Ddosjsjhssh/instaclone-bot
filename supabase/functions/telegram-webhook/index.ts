@@ -478,10 +478,112 @@ serve(async (req) => {
           
           // Extract amount and game type
           const parts = tableInfoLine.split(' | ');
-          const amount = parts[0].trim();
+          const amountText = parts[0].trim();
           const gameType = parts.slice(1).join(' | ').trim();
           
-          console.log('Amount:', amount, 'Game Type:', gameType);
+          // Parse amount (remove "Rs." and ".00" if present)
+          const amountMatch = amountText.match(/[\d.]+/);
+          const betAmount = amountMatch ? parseFloat(amountMatch[0]) : 0;
+          
+          console.log('Amount:', amountText, 'Parsed amount:', betAmount, 'Game Type:', gameType);
+          
+          // Deduct balance from both users
+          try {
+            // Get both users' balances
+            const { data: creatorUser, error: creatorError } = await supabase
+              .from('users')
+              .select('balance, username, telegram_first_name')
+              .eq('telegram_user_id', originalUser.id)
+              .maybeSingle();
+
+            const { data: acceptorUser, error: acceptorError } = await supabase
+              .from('users')
+              .select('balance, username, telegram_first_name')
+              .eq('telegram_user_id', acceptingUser.id)
+              .maybeSingle();
+
+            if (creatorError || acceptorError || !creatorUser || !acceptorUser) {
+              console.error('Error fetching user balances:', creatorError || acceptorError);
+              await sendTelegramMessage(
+                update.message.chat.id,
+                `❌ Error: Could not fetch user balances. Please try again.`
+              );
+              return new Response(JSON.stringify({ success: true }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200,
+              });
+            }
+
+            // Check if both users have sufficient balance
+            if (creatorUser.balance < betAmount) {
+              await sendTelegramMessage(
+                update.message.chat.id,
+                `❌ @${originalUsername} has insufficient balance. Current: ₹${creatorUser.balance.toFixed(2)}, Required: ₹${betAmount.toFixed(2)}`
+              );
+              return new Response(JSON.stringify({ success: true }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200,
+              });
+            }
+
+            if (acceptorUser.balance < betAmount) {
+              await sendTelegramMessage(
+                update.message.chat.id,
+                `❌ @${acceptingUsername} has insufficient balance. Current: ₹${acceptorUser.balance.toFixed(2)}, Required: ₹${betAmount.toFixed(2)}`
+              );
+              return new Response(JSON.stringify({ success: true }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200,
+              });
+            }
+
+            // Deduct from both users
+            const { error: deductCreatorError } = await supabase
+              .from('users')
+              .update({ 
+                balance: creatorUser.balance - betAmount,
+                updated_at: new Date().toISOString()
+              })
+              .eq('telegram_user_id', originalUser.id);
+
+            const { error: deductAcceptorError } = await supabase
+              .from('users')
+              .update({ 
+                balance: acceptorUser.balance - betAmount,
+                updated_at: new Date().toISOString()
+              })
+              .eq('telegram_user_id', acceptingUser.id);
+
+            if (deductCreatorError || deductAcceptorError) {
+              console.error('Error deducting balances:', deductCreatorError || deductAcceptorError);
+              await sendTelegramMessage(
+                update.message.chat.id,
+                `❌ Error deducting balances. Please contact support.`
+              );
+              return new Response(JSON.stringify({ success: true }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200,
+              });
+            }
+
+            console.log(`✅ Deducted ₹${betAmount} from both users`);
+            console.log(`Creator new balance: ₹${(creatorUser.balance - betAmount).toFixed(2)}`);
+            console.log(`Acceptor new balance: ₹${(acceptorUser.balance - betAmount).toFixed(2)}`);
+
+            // Notify both users
+            await sendTelegramMessage(
+              originalUser.id,
+              `💰 Match confirmed! ₹${betAmount.toFixed(2)} deducted.\nNew balance: ₹${(creatorUser.balance - betAmount).toFixed(2)}`
+            );
+
+            await sendTelegramMessage(
+              acceptingUser.id,
+              `💰 Match confirmed! ₹${betAmount.toFixed(2)} deducted.\nNew balance: ₹${(acceptorUser.balance - betAmount).toFixed(2)}`
+            );
+          } catch (balanceError) {
+            console.error('Error in balance deduction:', balanceError);
+            // Continue with match creation even if balance notification fails
+          }
           
           // Extract options (everything after "=>")
           const optionsIndex = originalMessage.indexOf('=>');
@@ -494,7 +596,7 @@ serve(async (req) => {
           
           // Format the message exactly like the reference image
           let formattedMessage = `@${originalUsername} Vs. @${acceptingUsername}\n\n`;
-          formattedMessage += `Rs.${amount}.00 | ${gameType}`;
+          formattedMessage += `Rs.${betAmount}.00 | ${gameType}`;
           
           if (options) {
             formattedMessage += `\n${options}`;
