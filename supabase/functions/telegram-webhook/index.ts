@@ -817,6 +817,8 @@ serve(async (req) => {
         // Extract usernames EXACTLY as shown in the confirmed table message
         let creatorDisplayName = 'User';
         let acceptorDisplayName = 'User';
+        let creatorHasUsername = false;
+        let acceptorHasUsername = false;
         
         // Parse the original confirmed message to get exact display format
         // Format is either "@username" or just "Name" (for users without username)
@@ -825,7 +827,12 @@ serve(async (req) => {
         if (vsMatch) {
           creatorDisplayName = vsMatch[1].trim();
           acceptorDisplayName = vsMatch[2].trim();
-          console.log('Extracted from message - Creator:', creatorDisplayName, 'Acceptor:', acceptorDisplayName);
+          
+          // Check if they have @ (meaning they have a username)
+          creatorHasUsername = creatorDisplayName.startsWith('@');
+          acceptorHasUsername = acceptorDisplayName.startsWith('@');
+          
+          console.log('Extracted from message - Creator:', creatorDisplayName, '(has @:', creatorHasUsername, ') Acceptor:', acceptorDisplayName, '(has @:', acceptorHasUsername, ')');
         }
         
         // Get both users for balance refund
@@ -896,19 +903,16 @@ serve(async (req) => {
         
         console.log(`✅ Refunded ₹${refundAmount} to both users`);
         
-        // Build cancel message with proper entities for clickable names
-        const cancelMessageText = `✅ Table #${tableNumber} Cancelled\n\nRefunded ₹${refundAmount.toFixed(2)} to both users:\n`;
-        let finalMessage = cancelMessageText;
+        // Build cancel message with proper entities to make names clickable (blue)
+        let cancelMessageText = `✅ Table #${tableNumber} Cancelled\n\nRefunded ₹${refundAmount.toFixed(2)} to both users:\n`;
         const entities: any[] = [];
         
         // Add creator name
-        let currentOffset = finalMessage.length;
-        if (creatorDisplayName.startsWith('@')) {
-          // Already has @, Telegram will auto-link
-          finalMessage += `${creatorDisplayName}\n`;
-        } else {
-          // Plain name, add text_mention entity
-          finalMessage += `${creatorDisplayName}\n`;
+        let currentOffset = cancelMessageText.length;
+        cancelMessageText += creatorDisplayName + '\n';
+        
+        // If creator doesn't have @ (no username), add text_mention entity to make it blue
+        if (!creatorHasUsername) {
           entities.push({
             offset: currentOffset,
             length: creatorDisplayName.length,
@@ -921,13 +925,11 @@ serve(async (req) => {
         }
         
         // Add acceptor name
-        currentOffset = finalMessage.length;
-        if (acceptorDisplayName.startsWith('@')) {
-          // Already has @, Telegram will auto-link
-          finalMessage += acceptorDisplayName;
-        } else {
-          // Plain name, add text_mention entity
-          finalMessage += acceptorDisplayName;
+        currentOffset = cancelMessageText.length;
+        cancelMessageText += acceptorDisplayName;
+        
+        // If acceptor doesn't have @ (no username), add text_mention entity to make it blue
+        if (!acceptorHasUsername) {
           entities.push({
             offset: currentOffset,
             length: acceptorDisplayName.length,
@@ -939,10 +941,12 @@ serve(async (req) => {
           });
         }
         
+        console.log('Cancel message entities:', JSON.stringify(entities));
+        
         // Send the message with entities
         const cancelMessagePayload: any = {
           chat_id: update.message.chat.id,
-          text: finalMessage,
+          text: cancelMessageText,
           parse_mode: 'HTML'
         };
         
