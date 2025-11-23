@@ -73,6 +73,27 @@ serve(async (req) => {
         });
       }
 
+      // Handle /start or /admin command - Show admin panel
+      if (command === '/start' || command === '/admin') {
+        const panelMessage = 
+          `🔧 <b>Admin Panel</b>\n\n` +
+          `<b>Available commands:</b>\n` +
+          `<code>/viewusers</code> - View all users and balances\n` +
+          `<code>/addfund</code> - Add funds to user\n` +
+          `<code>/deductfund</code> - Deduct funds from user\n\n` +
+          `<b>Usage:</b>\n` +
+          `<code>/addfund [user_id] [amount]</code>\n` +
+          `<code>/deductfund [user_id] [amount]</code>\n\n` +
+          `<b>Example:</b>\n` +
+          `<code>/addfund 123456789 500</code>`;
+        
+        await sendTelegramMessage(chatId, panelMessage);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+
       // Handle /viewusers command
       if (command === '/viewusers') {
         const { data: users, error } = await supabase
