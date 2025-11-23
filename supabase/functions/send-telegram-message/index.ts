@@ -24,6 +24,36 @@ serve(async (req) => {
 
     console.log('Sending table with auto-detected username:', username);
 
+    // Check cooldown: Get the last table created by this user
+    const { data: lastTable } = await supabase
+      .from('tables')
+      .select('created_at')
+      .eq('creator_telegram_user_id', telegram_user_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastTable) {
+      const lastTableTime = new Date(lastTable.created_at).getTime();
+      const currentTime = new Date().getTime();
+      const timeDiff = (currentTime - lastTableTime) / 1000; // in seconds
+
+      if (timeDiff < 10) {
+        const remainingTime = Math.ceil(10 - timeDiff);
+        console.log(`⏱️ Cooldown active for user ${telegram_user_id}. ${remainingTime}s remaining`);
+        return new Response(
+          JSON.stringify({ 
+            error: `Please wait ${remainingTime} seconds before sending another table`,
+            cooldown: remainingTime
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 429,
+          }
+        );
+      }
+    }
+
     // Generate random table number
     const tableNumber = Math.floor(Math.random() * 9000) + 1000;
     const currentTimestamp = new Date().toISOString();
