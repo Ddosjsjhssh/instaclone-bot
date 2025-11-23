@@ -470,8 +470,15 @@ const Index = () => {
             <h4 className="text-[8px] font-medium text-foreground">Last Table</h4>
           </div>
           <div className="space-y-0.5 text-[8px]">
-            <div>💰 ₹600 🃏 Full 📉 0</div>
-            <div>⚙️ None</div>
+            <div>💰 ₹{lastTableRequest.amount || '0'} 🃏 {lastTableRequest.type} 📉 Game+: {lastTableRequest.gamePlus || '0'}</div>
+            <div>⚙️ {Object.entries(lastTableRequest.options)
+              .filter(([_, value]) => value)
+              .map(([key]) => key === 'freshId' ? 'Fresh ID' : 
+                              key === 'codeAapDoge' ? 'Code Aap Doge' :
+                              key === 'noIphone' ? 'No iPhone' :
+                              key === 'noKingPass' ? 'No King Pass' :
+                              key === 'autoLoss' ? 'Auto Loss' : key)
+              .join(', ') || 'None'}</div>
           </div>
           <div className="flex gap-0.5">
             <Button variant="secondary" size="sm" className="flex-1 h-5 text-[8px] px-1" onClick={handleCopyTable}>
