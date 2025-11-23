@@ -78,14 +78,16 @@ serve(async (req) => {
         const panelMessage = 
           `🔧 <b>Admin Panel</b>\n\n` +
           `<b>Available commands:</b>\n` +
-          `<code>/viewusers</code> - View all users and balances\n` +
-          `<code>/addfund</code> - Add funds to user\n` +
-          `<code>/deductfund</code> - Deduct funds from user\n\n` +
+          `/viewusers - View all users and balances\n` +
+          `/addfund - Add funds to user\n` +
+          `/deductfund - Deduct funds from user\n` +
+          `/makeadmin - Make a user admin\n\n` +
           `<b>Usage:</b>\n` +
-          `<code>/addfund [user_id] [amount]</code>\n` +
-          `<code>/deductfund [user_id] [amount]</code>\n\n` +
+          `/addfund [user_id] [amount]\n` +
+          `/deductfund [user_id] [amount]\n` +
+          `/makeadmin [user_id]\n\n` +
           `<b>Example:</b>\n` +
-          `<code>/addfund 123456789 500</code>`;
+          `/addfund 123456789 500`;
         
         await sendTelegramMessage(chatId, panelMessage);
         return new Response(JSON.stringify({ success: true }), {
@@ -239,6 +241,78 @@ serve(async (req) => {
             `User: @${user.username || 'N/A'}\n` +
             `Deducted: ₹${amount.toFixed(2)}\n` +
             `New Balance: ₹${newBalance.toFixed(2)}`
+          );
+        }
+      }
+      
+      // Handle /makeadmin command
+      else if (command === '/makeadmin') {
+        if (args.length < 1) {
+          await sendTelegramMessage(chatId, '❌ Invalid format. Use: /makeadmin [user_id]\n\nExample: /makeadmin 123456789');
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        const targetUserId = parseInt(args[0]);
+
+        if (isNaN(targetUserId)) {
+          await sendTelegramMessage(chatId, '❌ Invalid user ID.');
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        // Check if user already exists in users table
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('telegram_user_id', targetUserId)
+          .maybeSingle();
+
+        if (userError || !user) {
+          await sendTelegramMessage(chatId, '❌ User not found in the system.');
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        // Check if already admin
+        const { data: existingAdmin } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('telegram_user_id', targetUserId)
+          .maybeSingle();
+
+        if (existingAdmin) {
+          await sendTelegramMessage(chatId, '⚠️ This user is already an admin.');
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        // Add user as admin
+        const { error: insertError } = await supabase
+          .from('admins')
+          .insert({
+            telegram_user_id: targetUserId,
+            username: user.username
+          });
+
+        if (insertError) {
+          console.error('Error making user admin:', insertError);
+          await sendTelegramMessage(chatId, '❌ Failed to make user admin.');
+        } else {
+          await sendTelegramMessage(
+            chatId,
+            `✅ <b>User Added as Admin!</b>\n\n` +
+            `User: @${user.username || 'N/A'}\n` +
+            `ID: <code>${targetUserId}</code>\n\n` +
+            `This user now has access to all admin commands.`
           );
         }
       }
