@@ -46,11 +46,11 @@ serve(async (req) => {
     const botInfo = await botInfoResponse.json();
     const botName = botInfo.result.username;
     
-    // Create the mini app URL - ensure it opens the full mini-app interface
-    const miniAppUrl = `https://d70c826e-49fc-498b-868b-28028e643a08.lovableproject.com`;
+    // Create the mini app URL - with compact parameter to force group context
+    const miniAppUrl = `https://d70c826e-49fc-498b-868b-28028e643a08.lovableproject.com?tgWebAppStartParam=group`;
     
     // Send message with inline button to the group
-    const message = "🎲 <b>Deep Night Ludo Club - Place Your Table</b>\n\n✨ Click button to open full mini-app\n💰 Balance auto-checked\n🎮 Last table settings loaded\n📝 Complete table form available\n\n<b>Available Features:</b>\n• Amount selection (₹1000-₹10000)\n• Game type (Full, Ulta, Popular, etc.)\n• Game+ options (100-1000)\n• Custom options (Fresh ID, Code Aap Doge, No iPhone, etc.)\n• Last table copy/edit\n• Real-time balance updates\n\n<b>👇 Click below to place your table 👇</b>";
+    const message = "🎲 <b>Deep Night Ludo Club</b>\n\n✅ अपना टेबल लगाने के लिए नीचे बटन दबाएं\n💰 Balance automatically checked\n🎮 Last table settings auto-loaded\n\n<b>👇 यहाँ क्लिक करें 👇</b>";
     
     const response = await fetch(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
