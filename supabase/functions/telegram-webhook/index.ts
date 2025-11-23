@@ -761,16 +761,27 @@ serve(async (req) => {
         const creatorId = tableRecord.creator_telegram_user_id;
         const acceptorId = tableRecord.acceptor_telegram_user_id;
         
-        // Get both users
+        // Extract usernames from the original message
+        const usernamesMatch = originalMessage.match(/@(\w+)\s+Vs\.\s+@(\w+)/);
+        let creatorUsername = 'User';
+        let acceptorUsername = 'User';
+        
+        if (usernamesMatch) {
+          creatorUsername = usernamesMatch[1];
+          acceptorUsername = usernamesMatch[2];
+          console.log('Extracted usernames - Creator:', creatorUsername, 'Acceptor:', acceptorUsername);
+        }
+        
+        // Get both users for balance refund
         const { data: creatorUser } = await supabase
           .from('users')
-          .select('balance, username, telegram_first_name')
+          .select('balance')
           .eq('telegram_user_id', creatorId)
           .maybeSingle();
         
         const { data: acceptorUser } = await supabase
           .from('users')
-          .select('balance, username, telegram_first_name')
+          .select('balance')
           .eq('telegram_user_id', acceptorId)
           .maybeSingle();
         
@@ -829,17 +840,13 @@ serve(async (req) => {
         
         console.log(`✅ Refunded ₹${refundAmount} to both users`);
         
-        // Format usernames for display
-        const creatorDisplay = creatorUser.username ? `@${creatorUser.username}` : creatorUser.telegram_first_name || 'User';
-        const acceptorDisplay = acceptorUser.username ? `@${acceptorUser.username}` : acceptorUser.telegram_first_name || 'User';
-        
-        // Notify group
+        // Notify group with extracted usernames
         await sendTelegramMessage(
           update.message.chat.id,
           `✅ <b>Table #${tableNumber} Cancelled</b>\n\n` +
           `Refunded ₹${refundAmount.toFixed(2)} to both users:\n` +
-          `${creatorDisplay}\n` +
-          `${acceptorDisplay}`
+          `@${creatorUsername}\n` +
+          `@${acceptorUsername}`
         );
         
         // Notify both users
