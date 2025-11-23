@@ -121,8 +121,15 @@ const Index = () => {
         .eq('telegram_user_id', telegramUserId)
         .maybeSingle();
 
+      console.log('Fetching balance for user:', telegramUserId);
+      console.log('Balance data:', data);
+
       if (!error && data) {
-        setUserBalance(data.balance || 0);
+        const balance = typeof data.balance === 'number' ? data.balance : parseFloat(data.balance || '0');
+        console.log('Setting balance to:', balance);
+        setUserBalance(balance);
+      } else if (error) {
+        console.error('Error fetching balance:', error);
       }
     } catch (error) {
       console.error('Error getting user balance:', error);
