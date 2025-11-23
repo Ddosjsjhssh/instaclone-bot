@@ -4,23 +4,23 @@ project_id = "jurzzgvupmgfffdodpmz"
 verify_jwt = false
 
 [functions.mongodb-operations.env]
-MONGODB_URI = "env.MONGODB_URI"
+MONGODB_URI = "mongodb+srv://Ludo:RpfS4DiD5eXvt4dz@cluster0.3zphwiq.mongodb.net/?appName=Cluster0"
 
 [functions.telegram-webhook]
 verify_jwt = false
 
 [functions.telegram-webhook.env]
-MONGODB_URI = "env.MONGODB_URI"
-TELEGRAM_BOT_TOKEN = "env.TELEGRAM_BOT_TOKEN"
+MONGODB_URI = "mongodb+srv://Ludo:RpfS4DiD5eXvt4dz@cluster0.3zphwiq.mongodb.net/?appName=Cluster0"
+TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho"
 
 [functions.send-telegram-message]
 verify_jwt = false
 
 [functions.send-telegram-message.env]
-TELEGRAM_BOT_TOKEN = "env.TELEGRAM_BOT_TOKEN"
+TELEGRAM_BOT_TOKEN = "8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho"
 
 [functions.initialize-admin]
 verify_jwt = false
 
 [functions.initialize-admin.env]
-MONGODB_URI = "env.MONGODB_URI"
+MONGODB_URI = "mongodb+srv://Ludo:RpfS4DiD5eXvt4dz@cluster0.3zphwiq.mongodb.net/?appName=Cluster0"
