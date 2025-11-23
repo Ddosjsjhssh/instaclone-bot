@@ -46,11 +46,11 @@ serve(async (req) => {
     const botInfo = await botInfoResponse.json();
     const botName = botInfo.result.username;
     
-    // Create the mini app URL - use the actual web app URL with group context
-    const miniAppUrl = `https://d70c826e-49fc-498b-868b-28028e643a08.lovableproject.com?forceHideBadge=true&startapp=group_${TELEGRAM_GROUP_CHAT_ID}`;
+    // Create the mini app URL - ensure it opens the full mini-app interface
+    const miniAppUrl = `https://d70c826e-49fc-498b-868b-28028e643a08.lovableproject.com`;
     
     // Send message with inline button to the group
-    const message = "🎲 <b>Deep Night Ludo Club - Place Your Table</b>\n\n✨ Click the button below to place your table request\n💰 Your balance will be checked automatically\n🎮 All your previous settings will be loaded\n\n<b>Features:</b>\n• Auto-load last table settings\n• Real-time balance checking\n• Quick amount selection\n• Game+ options\n• Custom options (Fresh ID, Code Aap Doge, etc.)";
+    const message = "🎲 <b>Deep Night Ludo Club - Place Your Table</b>\n\n✨ Click button to open full mini-app\n💰 Balance auto-checked\n🎮 Last table settings loaded\n📝 Complete table form available\n\n<b>Available Features:</b>\n• Amount selection (₹1000-₹10000)\n• Game type (Full, Ulta, Popular, etc.)\n• Game+ options (100-1000)\n• Custom options (Fresh ID, Code Aap Doge, No iPhone, etc.)\n• Last table copy/edit\n• Real-time balance updates\n\n<b>👇 Click below to place your table 👇</b>";
     
     const response = await fetch(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
@@ -64,7 +64,7 @@ serve(async (req) => {
           reply_markup: {
             inline_keyboard: [[
               {
-                text: "🎮 Place New Table",
+                text: "🎮 Place New Table - Open Mini App",
                 web_app: {
                   url: miniAppUrl
                 }
