@@ -50,6 +50,14 @@ const Index = () => {
   // Initialize Telegram Mini App and get user data
   useEffect(() => {
     const initializeApp = async () => {
+      // Initialize first admin if needed
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        await supabase.functions.invoke('initialize-admin');
+      } catch (error) {
+        console.log('Admin initialization check completed');
+      }
+
       if (window.Telegram?.WebApp) {
         const tg = window.Telegram.WebApp;
         tg.ready();
