@@ -23,6 +23,7 @@ declare global {
         };
         ready: () => void;
         expand: () => void;
+        openTelegramLink: (url: string) => void;
       };
     };
   }
@@ -643,7 +644,13 @@ const Index = () => {
 
         {/* Open Bot Button */}
         <Button
-          onClick={() => window.open('https://t.me/DeepNightClubBot', '_blank')}
+          onClick={() => {
+            if (window.Telegram?.WebApp) {
+              window.Telegram.WebApp.openTelegramLink('https://t.me/DeepNightClubBot');
+            } else {
+              window.open('https://t.me/DeepNightClubBot', '_blank');
+            }
+          }}
           variant="outline"
           className="w-full h-6 text-[9px] font-medium py-0"
         >
