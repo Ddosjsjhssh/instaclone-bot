@@ -5,7 +5,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { BotDocumentation } from "@/components/BotDocumentation";
 
 // Declare Telegram WebApp types
 declare global {
@@ -417,11 +416,6 @@ const Index = () => {
         </div>
       </div>
     );
-  }
-
-  // Show BotDocumentation if user is admin
-  if (isAdmin) {
-    return <BotDocumentation />;
   }
 
   return (
