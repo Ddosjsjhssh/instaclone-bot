@@ -69,20 +69,40 @@ Koyeb dashboard mein "Environment Variables" section mein:
 
 ## Post-Deployment Tasks
 
-### 1. Telegram Webhook Update
+### 1. **CRITICAL: Bot Web App URL Set Karein (Sabse Pehle)**
+
+Deploy hone ke baad **sabse pehle** BotFather mein Web App URL set karein:
+
+1. Telegram pe `@BotFather` ko message karein
+2. `/mybots` command send karein
+3. Apna bot select karein (Deep Night Ludo Club)
+4. "Bot Settings" click karein
+5. "Menu Button" select karein
+6. "Edit Menu Button URL" click karein
+7. Apna Koyeb URL enter karein: `https://YOUR-APP-NAME.koyeb.app`
+8. "Configure Menu Button" mein button ka naam set karein: `Place New Table` ya jo bhi chahiye
+
+**Important**: Bina Web App URL set kiye, bot sirf login page dikhayega!
+
+### 2. Telegram Webhook Update
 Deploy hone ke baad Koyeb se jo URL milega (jaise `https://your-app.koyeb.app`), usse Telegram webhook update karna hoga.
 
 **Method 1: Browser se (Recommended)**
 ```
-https://api.telegram.org/bot8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho/setWebhook?url=https://YOUR-KOYEB-URL.koyeb.app
+https://api.telegram.org/bot8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho/setWebhook?url=https://YOUR-KOYEB-URL.koyeb.app/functions/v1/telegram-webhook
 ```
 
 **Method 2: cURL**
 ```bash
-curl -X POST "https://api.telegram.org/bot8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho/setWebhook?url=https://YOUR-KOYEB-URL.koyeb.app"
+curl -X POST "https://api.telegram.org/bot8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho/setWebhook?url=https://YOUR-KOYEB-URL.koyeb.app/functions/v1/telegram-webhook"
 ```
 
-### 2. Test Karein
+**Verify Webhook**
+```
+https://api.telegram.org/bot8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6CGKLiXho/getWebhookInfo
+```
+
+### 3. Test Karein
 1. Telegram bot ko `/start` command send karein
 2. "Place New Table" button click karein
 3. Web app open hona chahiye
@@ -91,14 +111,22 @@ curl -X POST "https://api.telegram.org/bot8222802213:AAE-n9hBawD5D6EaZ82nt3vFWq6
 
 ## Troubleshooting
 
-### Issue 1: Web App nahi khul raha
+### Issue 1: Web App khulne par Login page dikhai de raha hai
+**Solution**: 
+- BotFather mein Web App URL properly set karein (Step 1 dekhen)
+- URL double-check karein - `https://your-app.koyeb.app` (without `/functions/v1/...`)
+- Bot ko restart karein ya `/start` command dobara send karein
+
+### Issue 2: Web App nahi khul raha
 - Check karein ki Koyeb app properly deploy hua hai
 - Environment variables sahi se add kiye hain
 - Koyeb logs check karein
+- Browser console mein errors check karein
 
-### Issue 2: Bot respond nahi kar raha
-- Telegram webhook properly set hua hai ya nahi check karein
+### Issue 3: Bot respond nahi kar raha
+- Telegram webhook properly set hua hai ya nahi check karein (`/getWebhookInfo` se verify karein)
 - Edge functions deploy hue hain ya nahi verify karein
+- Webhook URL mein `/functions/v1/telegram-webhook` path included hai ya nahi check karein
 
 ### Issue 3: Database connection error
 - VITE_SUPABASE_* variables sahi hain ya nahi verify karein
