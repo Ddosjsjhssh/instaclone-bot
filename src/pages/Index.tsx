@@ -640,6 +640,15 @@ const Index = () => {
         >
           ✅ Send Table
         </Button>
+
+        {/* Open Bot Button */}
+        <Button
+          onClick={() => window.open('https://t.me/DeepNightClubBot', '_blank')}
+          variant="outline"
+          className="w-full h-6 text-[9px] font-medium py-0"
+        >
+          🤖 Open Telegram Bot
+        </Button>
       </div>
     </div>
   );
