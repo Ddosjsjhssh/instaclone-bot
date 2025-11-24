@@ -123,14 +123,6 @@ serve(async (req) => {
         
         await sendTelegramMessage(chatId, panelMessage);
         
-        // Get bot username to create mini-app URL
-        const botInfoResponse = await fetch(
-          `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe`
-        );
-        const botInfo = await botInfoResponse.json();
-        const botUsername = botInfo.result.username;
-        const miniAppUrl = `https://t.me/${botUsername}/app`;
-        
         // Send Place New Table button
         await fetch(
           `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
@@ -144,7 +136,9 @@ serve(async (req) => {
                 inline_keyboard: [[
                   {
                     text: '🎮 Place New Table',
-                    url: miniAppUrl
+                    web_app: {
+                      url: 'https://d70c826e-49fc-498b-868b-28028e643a08.lovableproject.com'
+                    }
                   }
                 ]]
               }
