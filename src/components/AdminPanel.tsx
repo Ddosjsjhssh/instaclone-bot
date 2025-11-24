@@ -163,8 +163,47 @@ export const AdminPanel = () => {
         </div>
       </header>
 
-      {/* Send Pin Button Card */}
-      <div className="p-4">
+      {/* Bot Commands Info Card */}
+      <div className="p-4 space-y-4">
+        <Card className="p-4 bg-muted/50 border-border">
+          <div className="space-y-3">
+            <h3 className="font-bold text-base flex items-center gap-2">
+              🔧 Admin Panel
+            </h3>
+            
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm">Available commands:</h4>
+              <div className="space-y-1 text-xs">
+                <div><code className="text-blue-600">/viewusers</code> - View all users and balances</div>
+                <div><code className="text-blue-600">/checkbalance</code> - Check a user's balance</div>
+                <div><code className="text-blue-600">/addfund</code> - Add funds to user</div>
+                <div><code className="text-blue-600">/deductfund</code> - Deduct funds from user</div>
+                <div><code className="text-blue-600">/makeadmin</code> - Make a user admin</div>
+                <div><code className="text-blue-600">/sendpinbutton</code> - Send Place New Table button to group</div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm">Usage:</h4>
+              <div className="space-y-1 text-xs font-mono bg-muted/50 p-2 rounded">
+                <div>/checkbalance [user_id]</div>
+                <div>/addfund [user_id] [amount]</div>
+                <div>/deductfund [user_id] [amount]</div>
+                <div>/makeadmin [user_id]</div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm">Example:</h4>
+              <div className="space-y-1 text-xs font-mono bg-muted/50 p-2 rounded">
+                <div>/checkbalance 123456789</div>
+                <div>/addfund 123456789 500</div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Send Pin Button Card */}
         <Card className="p-4 bg-primary/10 border-primary">
           <div className="space-y-2">
             <h3 className="font-semibold text-sm">📌 Send Pinnable Button</h3>
